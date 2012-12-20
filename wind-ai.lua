@@ -89,7 +89,7 @@ sgs.ai_skill_use["@@shensu2"]=function(self,prompt)
 		if enemy:hasSkill("kongcheng") and enemy:isKongcheng() then
 		elseif self:slashProhibit(nil, enemy) then
 		elseif eff then
-			if enemy:getHp() == 1 and self:getCardsNum("Jink", enemy) == 0 then best_target = enemy break end
+			if enemy:getHp() == 1 and getCardsNum("Jink", enemy) == 0 then best_target = enemy break end
 			if def < defense then
 				best_target = enemy
 				defense = def
@@ -202,7 +202,7 @@ function sgs.ai_slash_prohibit.leiji(self, to, card)
 	local hcard = to:getHandcardNum()
 	if self.player:hasSkill("liegong") and (hcard>=self.player:getHp() or hcard<=self.player:getAttackRange()) then return false end
 
-	if self:getCardsNum("Jink", to) > 0 then return true end
+	if getCardsNum("Jink", to) > 0 then return true end
 	if self:isEquip("EightDiagram", to) then
 		local equips = to:getEquips()
 		for _, equip in sgs.qlist(equips) do

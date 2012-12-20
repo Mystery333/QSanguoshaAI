@@ -174,7 +174,7 @@ sgs.ai_skill_invoke.luoyi=function(self,data)
         if card:isKindOf("Slash") then
             for _,enemy in ipairs(self.enemies) do
                 if self.player:canSlash(enemy, card, true) and self:slashIsEffective(card, enemy) and self:objectiveLevel(enemy) > 3 then
-                    if self:getCardsNum("Jink", enemy) < 1 or (self:isEquip("Axe") and self.player:getCards("he"):length() > 4) then
+                    if getCardsNum("Jink", enemy) < 1 or (self:isEquip("Axe") and self.player:getCards("he"):length() > 4) then
                         slashtarget = slashtarget + 1
                     end
                 end
@@ -182,7 +182,7 @@ sgs.ai_skill_invoke.luoyi=function(self,data)
         end
         if card:isKindOf("Duel") then
             for _, enemy in ipairs(self.enemies) do
-                if self:getCardsNum("Slash") >= self:getCardsNum("Slash", enemy) 
+                if self:getCardsNum("Slash") >= getCardsNum("Slash", enemy) 
                 and self:objectiveLevel(enemy) > 3 and not self:cantbeHurt(enemy) and enemy:getMark("@fog") < 1 then 
                     dueltarget = dueltarget + 1 
                 end
@@ -1065,8 +1065,8 @@ sgs.ai_skill_use_func.LijianCard=function(card,use,self)
         local maxSlash = 0
         local friend_maxSlash
         for _, friend in ipairs(self.friends_noself) do
-            if (self:getCardsNum("Slash", friend)> maxSlash) and friend:isMale() then
-                maxSlash=self:getCardsNum("Slash", friend)
+            if (getCardsNum("Slash", friend)> maxSlash) and friend:isMale() then
+                maxSlash=getCardsNum("Slash", friend)
                 friend_maxSlash = friend
             end
         end
@@ -1074,7 +1074,7 @@ sgs.ai_skill_use_func.LijianCard=function(card,use,self)
             local safe = false
             if (first:hasSkill("ganglie") or first:hasSkill("fankui") or first:hasSkill("enyuan")) then
                 if (first:getHp()<=1 and first:getHandcardNum()==0) then safe=true end
-            elseif (self:getCardsNum("Slash", friend_maxSlash) >= self:getCardsNum("Slash", first)) then safe=true end
+            elseif (getCardsNum("Slash", friend_maxSlash) >= getCardsNum("Slash", first)) then safe=true end
             if safe then return friend_maxSlash end
         else self:log("unfound")
         end
@@ -1122,7 +1122,7 @@ sgs.ai_skill_use_func.LijianCard=function(card,use,self)
                         second = lord
                     else
                         if ((self.role=="loyalist" or (self.role=="renegade") and not (first:hasSkill("ganglie") and first:hasSkill("enyuan"))))
-                            and	( self:getCardsNum("Slash", first)<=self:getCardsNum("Slash", second)) then
+                            and	( getCardsNum("Slash", first)<=getCardsNum("Slash", second)) then
                             second = lord
                         end
                     end

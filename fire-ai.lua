@@ -438,7 +438,7 @@ sgs.ai_skill_invoke.shuangxiong=function(self,data)
 	handnum=handnum/2
 	self:sort(self.enemies, "hp")
 	for _, enemy in ipairs(self.enemies) do
-		if (self:getCardsNum("Slash", enemy)+enemy:getHp()<=handnum) and (self:getCardsNum("Slash")>=self:getCardsNum("Slash", enemy)) 
+ 		if (getCardsNum("Slash", enemy)+enemy:getHp()<=handnum) and (self:getCardsNum("Slash")>=getCardsNum("Slash", enemy)) 
 			and self:objectiveLevel(enemy) > 3 and not self:cantbeHurt(enemy) and enemy:getMark("@fog") < 1 then target = target + 1 end
 	end
 	

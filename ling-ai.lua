@@ -18,7 +18,7 @@ neoluoyi_skill.getTurnUseCard=function(self)
 		if card:isKindOf("Slash") then
 			for _,enemy in ipairs(self.enemies) do
 				if self.player:canSlash(enemy, card, true) and self:slashIsEffective(card, enemy) and self:objectiveLevel(enemy) > 3 then
-					if self:getCardsNum("Jink", enemy) < 1 or (self:isEquip("Axe") and self.player:getCards("he"):length() > 4) then
+					if getCardsNum("Jink", enemy) < 1 or (self:isEquip("Axe") and self.player:getCards("he"):length() > 4) then
 						slashtarget = slashtarget + 1
 					end
 				end
@@ -26,7 +26,7 @@ neoluoyi_skill.getTurnUseCard=function(self)
 		end
 		if card:isKindOf("Duel") then
 			for _, enemy in ipairs(self.enemies) do
-				if self:getCardsNum("Slash") >= self:getCardsNum("Slash", enemy) 
+				if self:getCardsNum("Slash") >= getCardsNum("Slash", enemy) 
 				and self:objectiveLevel(enemy) > 3 and not self:cantbeHurt(enemy) and enemy:getMark("@fog") < 1 then 
 					dueltarget = dueltarget + 1 
 				end

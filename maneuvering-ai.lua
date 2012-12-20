@@ -82,7 +82,7 @@ end
 function sgs.ai_armor_value.Vine(player, self)
 	for _, enemy in ipairs(self:getEnemies(player)) do
 		if (enemy:canSlash(player) and self:isEquip("Fan",enemy)) or self:hasSkills("huoji|shaoying", enemy) then return -1 end
-		if enemy:objectName() == self.player:objectName() and (self:getCardId("FireSlash", enemy) or self:getCardId("FireAttack",enemy)) then return -1 end
+		if getCardsNum("FireSlash", enemy) or getCardsNum("FireAttack",enemy) then return -1 end
 	end
 	if #(self:getEnemies(player))<3 then return 4 end
 	return 3
@@ -354,25 +354,13 @@ function SmartAI:useCardFireAttack(fire_attack, use)
 			and not self:cantbeHurt(enemy)
 			and not (enemy:isChained() and not self:isGoodChainTarget(enemy) and not self.player:hasSkill("jueqing")) then
 
-			local cards = enemy:getHandcards()
-			local success = true
-			for _, card in sgs.qlist(cards) do
-				if lack[card:getSuitString()] then
-					success = false
-					break
-				end
-			end
-
-			if success  then
-				if self:isEquip("Vine", enemy) or enemy:getMark("@kuangfeng") > 0 or (enemy:isChained() and self:isGoodChainTarget(enemy)) then
-					table.insert(targets_succ, 1, enemy)
-					break
-				else
-					table.insert(targets_succ, enemy)
-			end
+			if self:isEquip("Vine", enemy) or enemy:getMark("@kuangfeng") > 0 or (enemy:isChained() and self:isGoodChainTarget(enemy)) then
+				table.insert(targets_succ, 1, enemy)
+				break
 			else
-				table.insert(targets_fail, enemy)
+				table.insert(targets_succ, enemy)
 			end
+			
 		end
 	end
 
@@ -383,10 +371,6 @@ function SmartAI:useCardFireAttack(fire_attack, use)
 	or (self:isEquip("SilverLion") and self:hasSkill("fankui"))) and self.player:getHandcardNum() > 1 then
 		use.card = fire_attack
 		if use.to then use.to:append(self.player) end
-	elseif #targets_fail > 0 and self:getOverflow(self.player) > 0 then
-		use.card = fire_attack
-		local r = math.random(1, #targets_fail)
-		if use.to then use.to:append(targets_fail[r]) end
 	end
 end
 

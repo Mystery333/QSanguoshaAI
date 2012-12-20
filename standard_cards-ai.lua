@@ -21,7 +21,7 @@ function SmartAI:slashProhibit(card,enemy)
         end
         if enemy:isChained() and (card:isKindOf("NatureSlash") or self.player:hasSkill("zonghuo")) and (not self:isGoodChainTarget(enemy) and not self.player:hasSkill("jueqing")) and
             self:slashIsEffective(card,enemy) then return true end
-        if self:getCardsNum("Jink",enemy) == 0 and enemy:getHp() < 2 and self:slashIsEffective(card,enemy) then return true end
+        if getCardsNum("Jink",enemy) == 0 and enemy:getHp() < 2 and self:slashIsEffective(card,enemy) then return true end
         if enemy:isLord() and self:isWeak(enemy) and self:slashIsEffective(card,enemy) then return true end
         if self:isEquip("GudingBlade") and enemy:isKongcheng() then return true end
     else
@@ -115,12 +115,12 @@ function SmartAI:useCardSlash(card, use)
     for _, friend in ipairs(self.friends_noself) do
         local slash_prohibit = false
         slash_prohibit = self:slashProhibit(card,friend)
-        if (self.player:hasSkill("pojun") and friend:getHp() > 4 and self:getCardsNum("Jink", friend) == 0
+        if (self.player:hasSkill("pojun") and friend:getHp() > 4 and getCardsNum("Jink", friend) == 0
             and friend:getHandcardNum() < 3)
         or (friend:hasSkill("leiji") and not self.player:hasFlag("luoyi")
-        and (self:getCardsNum("Jink", friend) > 0 or (not self:isWeak(friend) and self:isEquip("EightDiagram",friend)))
+        and (getCardsNum("Jink", friend) > 0 or (not self:isWeak(friend) and self:isEquip("EightDiagram",friend)))
         and (hasExplicitRebel(self.room) or not friend:isLord()))
-        or (friend:isLord() and self.player:hasSkill("guagu") and friend:getLostHp() >= 1 and self:getCardsNum("Jink", friend) == 0)
+        or (friend:isLord() and self.player:hasSkill("guagu") and friend:getLostHp() >= 1 and getCardsNum("Jink", friend) == 0)
         or (friend:hasSkill("jieming") and self.player:hasSkill("rende") and (huatuo and self:isFriend(huatuo)))
         then
             if not slash_prohibit then
@@ -306,7 +306,7 @@ sgs.ai_skill_cardask["slash-jink"] = function(self, data, pattern, target)
                 if self:hasSkills(sgs.lose_equip_skill, target) and target:getEquips():length() > 1 then return "." end
                 if target:getHandcardNum() - target:getHp() > 2 then return "." end
             elseif self:isEquip("Blade", target) then
-                if self:getCardsNum("Jink") <= self:getCardsNum("Slash", target) then return "." end
+                if self:getCardsNum("Jink") <= getCardsNum("Slash", target) then return "." end
             end
         end
     end
@@ -494,7 +494,7 @@ function sgs.ai_weapon_value.Axe(self, enemy)
 end
 
 sgs.ai_skill_cardask["blade-slash"] = function(self, data, pattern, target)
-    if target and self:isFriend(target) and not (target:hasSkill("leiji") and self:getCardsNum("Jink", target, "h") > 0) then
+    if target and self:isFriend(target) and not (target:hasSkill("leiji") and getCardsNum("Jink", target) > 0) then
         return "."
     end
     for _, slash in ipairs(self:getCards("Slash")) do
@@ -740,7 +740,6 @@ function SmartAI:useCardDuel(duel, use)
     local friends = self:exclude(self.friends_noself, duel)
     local target 
     local n1 = self:getCardsNum("Slash")
-    if self.player:hasSkill("wushuang") then n1 = n1 * 2 end
     local huatuo = self.room:findPlayerBySkillName("jijiu")
     for _, friend in ipairs(friends) do
         if friend:hasSkill("jieming") and self.player:hasSkill("rende") and (huatuo and self:isFriend(huatuo))then
@@ -754,8 +753,7 @@ function SmartAI:useCardDuel(duel, use)
     local ptarget = self:getPriorTarget()
     if ptarget then
         local target = ptarget
-        local n2 = self:getCardsNum("Slash",target)
-        if target:hasSkill("wushuang") then n2 = n2*2 end
+        local n2 = getCardsNum("Slash",target)
         local useduel
         if target and self:objectiveLevel(target) > 3 and self:hasTrickEffective(duel, target) 
             and not self.room:isProhibited(self.player, target, duel)
@@ -782,9 +780,8 @@ function SmartAI:useCardDuel(duel, use)
     end
     local n2 
     for _, enemy in ipairs(enemies) do
-        n2 = self:getCardsNum("Slash",enemy)
-        if self:objectiveLevel(enemy) > 3 then
-            if enemy:hasSkill("wushuang") then n2 = n2*2 end
+        n2 = getCardsNum("Slash",enemy)
+        if self:objectiveLevel(enemy) > 3 then            
             target = enemy
             break
         end
@@ -1178,7 +1175,7 @@ sgs.ai_skill_cardask["collateral-slash"] = function(self, data, pattern, target,
                 return slash:toString()
             end 
         end
-        if (target2:getHp() > 2 or self:getCardsNum("Jink", target2) > 1) and not target2:getRole() == "lord" and self.player:getHandcardNum() > 1 then
+        if (target2:getHp() > 2 or getCardsNum("Jink", target2) > 1) and not target2:getRole() == "lord" and self.player:getHandcardNum() > 1 then
             for _, slash in ipairs(self:getCards("Slash")) do
                 return slash:toString()
             end 

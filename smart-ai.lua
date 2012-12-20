@@ -365,10 +365,10 @@ function SmartAI:getDynamicUsePriority(card)
 
 	local good_null, bad_null = 0, 0
 	for _, friend in ipairs(self.friends) do
-		good_null = good_null + self:getCardsNum("Nullification", friend)
+		good_null = good_null + getCardsNum("Nullification", friend)
 	end
 	for _, enemy in ipairs(self.enemies) do
-		bad_null = bad_null + self:getCardsNum("Nullification", enemy)
+		bad_null = bad_null + getCardsNum("Nullification", enemy)
 	end
 
 	local value = self:getUsePriority(card)
@@ -437,7 +437,7 @@ function SmartAI:getDynamicUsePriority(card)
 
 			for _, enemy in sgs.qlist(others) do
 				if self:isEnemy(enemy) and (enemy:getHp() <= 2 or enemy:isKongcheng())
-					and self:getCardsNum("Analeptic", enemy) == 0 and self:getCardsNum("Peach", enemy) == 0 then
+					and getCardsNum("Analeptic", enemy) == 0 and getCardsNum("Peach", enemy) == 0 then
 					table.insert(dummy_use.probably_hit, enemy)
 					break
 				end
@@ -460,12 +460,12 @@ function SmartAI:getDynamicUsePriority(card)
 				end
 				value = value - (probably_hit:getHp() - 1)/2.0
 
-				if use_card:isKindOf("Slash") and self:getCardsNum("Jink", probably_hit) == 0 then
+				if use_card:isKindOf("Slash") and getCardsNum("Jink", probably_hit) == 0 then
 					value = value + 5
 				elseif use_card:isKindOf("FireAttack") then
 					value = value + 0.5 + self:getHandcardNum()
 				elseif use_card:isKindOf("Duel") then
-					value = value + 2 + (self:getHandcardNum() - self:getCardsNum("Slash", probably_hit))
+					value = value + 2 + (self:getHandcardNum() - getCardsNum("Slash", probably_hit))
 				end
 			end
 		elseif sgs.dynamic_value.control_card[class_name] then
@@ -1593,7 +1593,7 @@ function SmartAI:filterEvent(event, player, data)
 			end
 		end
 		if card:isKindOf("Slash") and to:hasSkill("leiji") and 
-			(self:getCardsNum("Jink", to)>0 or (to:getArmor() and to:getArmor():objectName() == "EightDiagram"))
+			(getCardsNum("Jink", to)>0 or (to:getArmor() and to:getArmor():objectName() == "EightDiagram"))
 			and (to:getHandcardNum()>2 or from:getState() == "robot") then
 			sgs.ai_leiji_effect = true
 		end
@@ -3052,25 +3052,27 @@ function SmartAI:getCards(class_name, player, flag)
 end
 
 function getCardsNum(class_name, player)
+	local cards = sgs.QList2Table(player:getHandcards())
+	local num = 0
+	local shownum = 0
+	local redpeach = 0
+	local redslash = 0
+	local blackcard = 0
+	local blacknull = 0
+	local equipnull = 0
+	local equipcard = 0
+	local heartslash = 0
+	local heartpeach = 0
+	local spadenull = 0
+	local spadewine = 0
+	local spadecard = 0
+	local diamondcard = 0
+	local clubcard = 0
+	local slashjink = 0
+
 	if not player then
 		return #getCards(class_name, player)
-	else
-		local cards = sgs.QList2Table(player:getHandcards())
-		local num = 0
-		local shownum = 0
-		local redpeach = 0
-		local redslash = 0
-		local blackcard = 0
-		local blacknull = 0
-		local equipnull = 0
-		local equipcard = 0
-		local heartslash = 0
-		local heartpeach = 0
-		local spadenull = 0
-		local spadewine = 0
-		local diamondcard = 0
-		local clubcard = 0
-		local slashjink = 0
+	else		
 		for _, card in ipairs(cards) do
 			if card:hasFlag("visible") then
 				shownum = shownum + 1
@@ -3147,19 +3149,21 @@ function getCardsNum(class_name, player)
 	end
 
 	if class_name == "Slash" then
+		local slashnum
 		if player:hasSkill("wusheng") then
-			return redslash + num + (player:getHandcardNum()-shownum)/1.2
+			slashnum = redslash + num + (player:getHandcardNum()-shownum)/1.2
 		elseif player:hasSkill("wushen") then
-			return heartslash + num + (player:getHandcardNum()-shownum)/1.5
+			slashnum = heartslash + num + (player:getHandcardNum()-shownum)/1.5
 		elseif player:hasSkill("longhun") then
-			return diamondcard + num + (player:getHandcardNum()-shownum)/3
+			slashnum = diamondcard + num + (player:getHandcardNum()-shownum)/3
 		elseif player:hasSkill("gongqi") then
-			return num+(player:getHandcardNum()-shownum)/2+equipcard
+			slashnum = num+(player:getHandcardNum()-shownum)/2+equipcard
 		elseif player:hasSkill("longdan") then
-			return slashjink+(player:getHandcardNum()-shownum)/1.5
+			slashnum = slashjink+(player:getHandcardNum()-shownum)/1.5
 		else
-			return num+(player:getHandcardNum()-shownum)/2
+			slashnum = num+(player:getHandcardNum()-shownum)/2
 		end
+		return player:hasSkill("wushuang") and slashnum*2 or slashnum
 	elseif class_name == "Jink" then
 		if player:hasSkill("qingguo") then 
 			return blackcard + num + (player:getHandcardNum()-shownum)/1.2
@@ -3533,17 +3537,17 @@ function SmartAI:getAoeValueTo(card, to , from)
 	end
 
 	if card:isKindOf("SavageAssault") then
-		sj_num = self:getCardsNum("Slash", to)
+		sj_num = getCardsNum("Slash", to)
 		if to:hasSkill("juxiang") then
 			value = value + 50
 		end
 	end
 	if card:isKindOf("ArcheryAttack") then
-		sj_num = self:getCardsNum("Jink", to)
+		sj_num = getCardsNum("Jink", to)
 	end
 
 	if self:aoeIsEffective(card, to) then
-		if to:getHp() > 1 or (self:getCardsNum("Peach", to) + self:getCardsNum("Analeptic", to) > 0) then
+		if to:getHp() > 1 or (getCardsNum("Peach", to) + getCardsNum("Analeptic", to) > 0) then
 			if to:hasSkill("yiji") or to:hasSkill("jianxiong") then
 				value = value + 20
 			end
@@ -3560,8 +3564,8 @@ function SmartAI:getAoeValueTo(card, to , from)
 		end
 
 		if card:isKindOf("ArcheryAttack") then
-			sj_num = self:getCardsNum("Jink", to)
-			if (to:hasSkill("leiji") and self:getCardsNum("Jink", to) > 0) or self:isEquip("EightDiagram", to) then
+			sj_num = getCardsNum("Jink", to)
+			if (to:hasSkill("leiji") and getCardsNum("Jink", to) > 0) or self:isEquip("EightDiagram", to) then
 				value = value + 30
 				if self:hasSuit("spade", true, to) then
 					value = value + 20
@@ -3580,7 +3584,7 @@ function SmartAI:getAoeValueTo(card, to , from)
 
 		if self:isFriend(from, to) then
 			if (to:isLord() or from:isLord()) and not (to:hasSkill("buqu") and to:getPile("buqu"):length() < 5) then
-				if to:getHp() <= 1 and self:getCardsNum("Peach", from) == 0 and sj_num == 0 then
+				if to:getHp() <= 1 and getCardsNum("Peach", from) == 0 and sj_num == 0 then
 					if sgs.evaluatePlayerRole(to) == "renegade" then
 						value = value - 50
 					else
@@ -3588,9 +3592,9 @@ function SmartAI:getAoeValueTo(card, to , from)
 					end
 				end
 			end
-			value = value + self:getCardsNum("Peach", from) * 2
+			value = value + getCardsNum("Peach", from) * 2
 		elseif sgs.evaluatePlayerRole(to) == "rebel" or (to:isLord() and sgs.evaluatePlayerRole(from) == "rebel") then
-			if to:getHp() <= 1 and self:getCardsNum("Peach", to) == 0 and sj_num == 0 then
+			if to:getHp() <= 1 and getCardsNum("Peach", to) == 0 and sj_num == 0 then
 				value = value - 50
 			end
 		end

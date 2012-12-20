@@ -157,7 +157,7 @@ sgs.ai_skill_use["@@xuanhuo"] = function(self, prompt)
 		end
 	end
 	for _, enemy in ipairs(self.enemies) do
-		if enemy:getCards("e"):length() > 1 and self:getCardsNum("Slash", enemy) == 0 
+		if enemy:getCards("e"):length() > 1 and getCardsNum("Slash", enemy) == 0 
 		and not self:hasSkills(sgs.lose_equip_skill,enemy) then
 			robequip = robequip + 1
 		end
@@ -168,7 +168,7 @@ sgs.ai_skill_use["@@xuanhuo"] = function(self, prompt)
 		return "@XuanhuoCard=.->"..lord:objectName()
 	end
 	for _, enemy in ipairs(self.enemies) do
-		if enemy:getCards("e"):length() > 1 and self:getCardsNum("Slash", enemy) == 0 
+		if enemy:getCards("e"):length() > 1 and getCardsNum("Slash", enemy) == 0 
 		and not self:hasSkills(sgs.lose_equip_skill,enemy) then
 			self.room:setPlayerFlag(enemy, "xuanhuo_target")
 			return "@XuanhuoCard=.->"..enemy:objectName()
@@ -238,7 +238,7 @@ sgs.ai_skill_cardask["xuanhuo-slash"] = function(self, data, pattern, target, ta
 				return slash:toString()
 			end 
 		end
-		if (target2:getHp() > 2 or self:getCardsNum("Jink", target2) > 1) and not target2:getRole() == "lord" and self.player:getHandcardNum() > 1 then
+		if (target2:getHp() > 2 or getCardsNum("Jink", target2) > 1) and not target2:getRole() == "lord" and self.player:getHandcardNum() > 1 then
 			for _, slash in ipairs(self:getCards("Slash")) do
 				return slash:toString()
 			end 

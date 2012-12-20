@@ -306,7 +306,7 @@ sgs.dynamic_value.control_card.JixiCard = true
 sgs.ai_skill_cardask["@xiangle-discard"] = function(self, data)
 	local target = data:toPlayer()
 	if self:isFriend(target) and not
-		(target:hasSkill("leiji") and (self:getCardsNum("Jink", target)>0 or (not self:isWeak(target) and self:isEquip("EightDiagram",target))))
+		(target:hasSkill("leiji") and (getCardsNum("Jink", target)>0 or (not self:isWeak(target) and self:isEquip("EightDiagram",target))))
 		then return "." end
 	local has_peach, has_anal, has_slash, has_jink
 	for _, card in sgs.qlist(self.player:getHandcards()) do
@@ -320,7 +320,7 @@ sgs.ai_skill_cardask["@xiangle-discard"] = function(self, data)
 	if has_slash then return "$" .. has_slash:getEffectiveId()
 	elseif has_jink then return "$" .. has_jink:getEffectiveId()
 	elseif has_anal or has_peach then
-		if self:getCardsNum("Jink", target) == 0 and self.player:hasFlag("drank") and self:getAllPeachNum(target) == 0 then
+		if getCardsNum("Jink", target) == 0 and self.player:hasFlag("drank") and self:getAllPeachNum(target) == 0 then
 			if has_anal then return "$" .. has_anal:getEffectiveId()
 			else return "$" .. has_peach:getEffectiveId()
 			end
@@ -399,45 +399,8 @@ sgs.slash_property = {}
 sgs.ai_skill_use_func.TiaoxinCard = function(card,use,self)
 	local targets = {}
 	for _, enemy in ipairs(self.enemies) do
-		sgs.slash_property =
-		{
-			is_black = false,
-			is_red = false,
-			is_normal = false,
-			is_fire = false,
-			is_thunder = false
-		}
-
-		local cards = enemy:getHandcards()
-		cards = sgs.QList2Table(cards)
-
-		for _, card in ipairs(cards) do
-			if card:isKindOf("Slash") then
-				if card:isBlack() then sgs.slash_property.is_black = true end
-				if card:isRed() then sgs.slash_property.is_red = true end
-				if card:isKindOf("FireSlash") then sgs.slash_property.is_fire = true
-				elseif card:isKindOf("ThunderSlash") then sgs.slash_property.is_thunder = true
-				else sgs.slash_property.is_normal = true
-				end
-			end
-		end
-
-		local slash_useless = false
-		local has_armor = self.player:getArmor()
-		if has_armor then
-			if self.player:getArmor():objectName() == "Vine" then
-				if not (sgs.slash_property.is_fire or sgs.slash_property.is_thunder) then
-					slash_useless = true
-				end
-			elseif self.player:getArmor():objectName() == "RenwangShield" then
-				if not sgs.slash_property.is_red then
-					slash_useless = true
-				end
-			end
-		end
-
 		if enemy:distanceTo(self.player) <= enemy:getAttackRange() and
-			(self:getCardsNum("Slash", enemy) == 0 or slash_useless or self:getCardsNum("Jink") > 0) and
+			(getCardsNum("Slash", enemy) == 0 or self:getCardsNum("Jink") > 0) and
 			not enemy:isNude() then
 			table.insert(targets, enemy)
 		end
