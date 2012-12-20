@@ -80,12 +80,16 @@ function sgs.ai_weapon_value.Fan(self, enemy)
 end
 
 function sgs.ai_armor_value.Vine(player, self)
+	if (self:needKongcheng(player) or player:hasSkill("lianying")) and player:getHandcardNum() == 1 then return 5 end
+	if self:hasSkills(sgs.lose_equip_skill, player) then return 5 end
+
 	for _, enemy in ipairs(self:getEnemies(player)) do
 		if (enemy:canSlash(player) and self:isEquip("Fan",enemy)) or self:hasSkills("huoji|shaoying", enemy) then return -1 end
 		if getCardsNum("FireSlash", enemy) or getCardsNum("FireAttack",enemy) then return -1 end
 	end
-	if #(self:getEnemies(player))<3 then return 4 end
-	return 3
+
+	if #(self:getEnemies(player))<3 or ( self:isWeak(player) and getCardsNum("Jink",self.player)==0 ) then return 4 end
+	return -1
 end
 
 function SmartAI:searchForAnaleptic(use,enemy,slash)
