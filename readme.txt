@@ -1,4 +1,4 @@
-新神杀AI改进项目，基于贴吧置顶帖 QSanguoshaTest1201[常用LUA整合版]
+新神杀AI改进项目，基于贴吧置顶帖 QSanguoshaTest1221[常用LUA整合版]
 
 
 开发约定:

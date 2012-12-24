@@ -10,7 +10,7 @@ math.randomseed(os.time())
 -- SmartAI is the base class for all other specialized AI classes
 SmartAI = class "SmartAI"
 
-version = "QSanguosha AI 20120405 (V0.8 Stable)"
+version = "QSanguosha AI 20120405 (V0.85 Alpha)"
 --- this function is only function that exposed to the host program
 --- and it clones an AI instance by general name
 -- @param player The ServerPlayer object that want to create the AI object
@@ -337,7 +337,7 @@ function SmartAI:getUsePriority(card)
 		if v then return v else return sgs.ai_use_priority[class_name] end
 	end
 	if self.player:hasSkill("rende") then
-		if card:isKindOf("ExNihio") then v = 8.9 end
+		if card:isKindOf("ExNihilo") then v = 8.9 end
 		return v or sgs.ai_use_priority[class_name]
 	end
 
@@ -864,7 +864,7 @@ function sgs.modifiedRoleTrends(role)
 				sgs.role_evaluation[name]["rebel"] = sgs.role_evaluation[name][role] + 15	
 			end
 		end
-		global_room:writeToConsole("The evaluation role of " .. modifier:getGeneralName() .. " " ..  " is " .. sgs.evaluatePlayerRole(modifier))
+		global_room:writeToConsole("The evaluation role of " .. modifier:getGeneralName() ..  " is " .. sgs.evaluatePlayerRole(modifier))
 	end
 	
 	global_room:writeToConsole("Modified Role Trends Success!")
@@ -1176,6 +1176,7 @@ function sgs.gameProcess(room)
 	else return "neutral" end
 end
 
+--@@todo: remove all the objectiveLevel
 function SmartAI:objectiveLevel(player)
 	if player:objectName() == self.player:objectName() then return -2 end
 
@@ -1430,6 +1431,7 @@ function SmartAI:updateRoleTargets()
 end
 
 function SmartAI:updatePlayers()
+	if self.role ~= self.player:getRole() then self.role = self.player:getRole() end
 	for _, aflag in ipairs(sgs.ai_global_flags) do
 		sgs[aflag] = nil
 	end
@@ -1564,6 +1566,17 @@ function SmartAI:filterEvent(event, player, data)
 					callback(player, promptlist)
 				end
 			end
+			if data:toString() == "skillInvoke:fenxin:yes" then
+				for _, aplayer in sgs.qlist(self.room:getAllPlayers()) do
+					if aplayer:hasFlag("FenxinTarget") then
+						local temp_table = sgs.role_evaluation[player:objectName()]
+						sgs.role_evaluation[player:objectName()] = sgs.role_evaluation[aplayer:objectName()]
+						sgs.role_evaluation[aplayer:objectName()] = temp_table
+						self:updatePlayers()
+						break
+					end
+				end
+			end
 		end
 	elseif event == sgs.CardUsed or event == sgs.CardEffect or event == sgs.GameStart or event == sgs.Death or event == sgs.EventPhaseStart then
 		self:updatePlayers()
@@ -1593,7 +1606,7 @@ function SmartAI:filterEvent(event, player, data)
 			end
 		end
 		if card:isKindOf("Slash") and to:hasSkill("leiji") and 
-			(getCardsNum("Jink", to)>0 or (to:getArmor() and to:getArmor():objectName() == "EightDiagram"))
+			(self:getCardsNum("Jink", to)>0 or (to:getArmor() and to:getArmor():objectName() == "EightDiagram"))
 			and (to:getHandcardNum()>2 or from:getState() == "robot") then
 			sgs.ai_leiji_effect = true
 		end
@@ -1709,7 +1722,7 @@ function SmartAI:askForChoice(skill_name, choices, data)
 		if skill and choices:match(skill:getDefaultChoice(self.player)) then
 			return skill:getDefaultChoice(self.player)
 		else
-			local choice_table = choices:split("+");
+			local choice_table = choices:split("+")
 			for index, achoice in ipairs(choice_table) do
 				if achoice == "benghuai" then table.remove(choice_table, index) break end
 			end
@@ -1917,7 +1930,7 @@ function SmartAI:askForCardChosen(who, flags, reason)
 	end
 
 	if self:isFriend(who) then
-		if flags:match("j") then
+		if flags:match("j") and not who:containsTrick("YanxiaoCard") then
 			local tricks = who:getCards("j")
 			local lightning, indulgence, supply_shortage
 			for _, trick in sgs.qlist(tricks) do
@@ -1994,14 +2007,19 @@ function SmartAI:askForCardChosen(who, flags, reason)
 
 		if flags:match("j") then
 			local tricks = who:getCards("j")
-			local lightning
+			local lightning, yanxiao
 			for _, trick in sgs.qlist(tricks) do
 				if trick:isKindOf("Lightning") then
 					lightning = trick:getId()
+				elseif trick:isKindOf("YanxiaoCard") then
+					yanxiao = trick:getId()
 				end
 			end
 			if self:hasWizard(self.enemies,true) and lightning then
 				return lightning
+			end
+			if yanxiao then
+				return yanxiao
 			end
 		end
 
@@ -2174,7 +2192,7 @@ function sgs.ai_cardneed.equip(to, card, self)
 end
 
 function SmartAI:needKongcheng(player)
-	return (player:isKongcheng() and (player:hasSkill("kongcheng") or (player:hasSkill("zhiji") and not player:hasSkill("guanxing")))) or
+	return (player:isKongcheng() and (player:hasSkill("kongcheng") or (player:hasSkill("zhiji") and player:getMark("zhiji") == 0))) or
 			(not self:isWeak(player) and self:hasSkills(sgs.need_kongcheng,player))
 end
 
@@ -2658,6 +2676,10 @@ function SmartAI:getTurnUse()
 		slashAvail = slashAvail+1
 		self.slash_distance_limit = true
 	end
+	
+	if self.player:getMark("huxiao") > 0 then
+		slashAvail = slashAvail + self.player:getMark("huxiao")
+	end
 
 	self:fillSkillCards(cards)
 
@@ -2697,6 +2719,8 @@ function SmartAI:getTurnUse()
 				if card:isKindOf("Weapon") then
 					self.predictedRange = sgs.weapon_range[card:getClassName()]
 					self.weaponUsed = true
+				else
+					self.predictedRange = 1
 				end
 				if card:isKindOf("OffensiveHorse") then self.predictNewHorse = true end
 				if card:objectName() == "Crossbow" then slashAvail = 100 end
@@ -3149,7 +3173,6 @@ function getCardsNum(class_name, player)
 	end
 
 	if class_name == "Slash" then
-		local slashnum
 		if player:hasSkill("wusheng") then
 			slashnum = redslash + num + (player:getHandcardNum()-shownum)/1.2
 		elseif player:hasSkill("wushen") then
@@ -3307,7 +3330,7 @@ function SmartAI:evaluatePlayerCardsNum(class_name, player)
 	end
 	
 	local percentage = (#(self:getCardsFromGame(class_name)) - #(self:getCardsFromDiscardPile(class_name)))/length
-	local modified = 1;
+	local modified = 1
 	if class_name == "Jink" then modified = 1.23
 	elseif class_name == "Analeptic" then modified = 1.17
 	elseif class_name == "Peach" then modified = 1.19
@@ -3537,17 +3560,17 @@ function SmartAI:getAoeValueTo(card, to , from)
 	end
 
 	if card:isKindOf("SavageAssault") then
-		sj_num = getCardsNum("Slash", to)
+		sj_num = self:getCardsNum("Slash", to)
 		if to:hasSkill("juxiang") then
 			value = value + 50
 		end
 	end
 	if card:isKindOf("ArcheryAttack") then
-		sj_num = getCardsNum("Jink", to)
+		sj_num = self:getCardsNum("Jink", to)
 	end
 
 	if self:aoeIsEffective(card, to) then
-		if to:getHp() > 1 or (getCardsNum("Peach", to) + getCardsNum("Analeptic", to) > 0) then
+		if to:getHp() > 1 or (self:getCardsNum("Peach", to) + self:getCardsNum("Analeptic", to) > 0) then
 			if to:hasSkill("yiji") or to:hasSkill("jianxiong") then
 				value = value + 20
 			end
