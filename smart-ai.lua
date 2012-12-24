@@ -3173,7 +3173,7 @@ function getCardsNum(class_name, player)
 	end
 
 	if class_name == "Slash" then
-		 local slashnum
+		local slashnum
 		if player:hasSkill("wusheng") then
 			slashnum = redslash + num + (player:getHandcardNum()-shownum)/1.2
 		elseif player:hasSkill("wushen") then
