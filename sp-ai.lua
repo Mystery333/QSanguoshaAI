@@ -194,7 +194,32 @@ end
 
 sgs.ai_card_intention.YuanhuCard = -30
 
-local function can_be_selected_as_target(self, card, who)
+xueji_skill={}
+xueji_skill.name="xueji"
+table.insert(sgs.ai_skills,xueji_skill)
+xueji_skill.getTurnUseCard=function(self)
+	if self.player:hasUsed("XuejiCard") then return end
+
+	local card
+	local cards = self.player:getCards("he")
+	cards = sgs.QList2Table(cards)
+	self:sortByUseValue(cards, true)
+
+	for _, acard in ipairs(cards) do
+		if acard:isRed() then
+			card = acard
+			break
+		end
+	end
+	if card then
+		card = sgs.Card_Parse("@XuejiCard=" .. card:getEffectiveId())
+		return card
+	end
+
+	return nil
+end
+
+function can_be_selected_as_target(self, card, who)
 	-- validation of rule
 	if self.player:getWeapon() and self.player:getWeapon():getEffectiveId() == card:getEffectiveId() then
 		if self.player:distanceTo(who) > 1 then return false end
@@ -274,6 +299,74 @@ end
 
 sgs.ai_use_value.XuejiCard = 3
 sgs.ai_use_priority.XuejiCard = 2.2
+
+sgs.ai_skill_use["@@bifa"] = function(self, prompt)
+	local cards = self.player:getHandcards()
+	cards = sgs.QList2Table(cards)
+	self:sortByKeepValue(cards)
+	self:sort(self.enemies, "handcard")
+	if #self.enemies > 0 then
+		for _, c in ipairs(cards) do
+			if c:isKindOf("EquipCard") then return "@BifaCard=" .. c:getEffectiveId() .. "->" .. self.enemies[1]:objectName() end
+		end
+		for _, c in ipairs(cards) do
+			if c:isKindOf("TrickCard") and not (c:isKindOf("Nullification") and self:getCardsNum("Nullification") == 1) then 
+				return "@BifaCard=" .. c:getEffectiveId() .. "->" .. self.enemies[1]:objectName() 
+			end
+		end
+		for _, c in ipairs(cards) do
+			if c:isKindOf("Slash") then 
+				return "@BifaCard=" .. c:getEffectiveId() .. "->" .. self.enemies[1]:objectName() 
+			end
+		end
+	end
+end
+
+sgs.ai_skill_cardask["@bifa-give"] = function(self, data)
+	local card_type = data:toString()
+	local cards = self.player:getHandcards()
+	cards = sgs.QList2Table(cards)
+	self:sortByUseValue(cards)
+	for _, c in ipairs(cards) do
+		if c:isKindOf(card_type) and not c:isKindOf("Peach") and not c:isKindOf("ExNihilo") then
+			return "$" .. c:getEffectiveId()
+		end
+	end
+	return "."
+end
+
+local songci_skill={}
+songci_skill.name="songci"
+table.insert(sgs.ai_skills, songci_skill)
+songci_skill.getTurnUseCard = function(self)
+	if self.player:hasUsed("SongciCard") then return end
+	return sgs.Card_Parse("@SongciCard=.")
+end
+
+sgs.ai_skill_use_func.SongciCard = function(card,use,self)
+	self:sort(self.friends, "handcard")
+	for _, friend in ipairs(self.friends) do
+		if friend:getMark("@songci") == 0 and friend:getHandcardNum() < friend:getHp() and not (friend:hasSkill("manjuan") and self.room:getCurrent() ~= friend) then
+			if not (friend:hasSkill("haoshi") and friend:getHandcardNum() <= 1 and friend:getHp() >= 3) then
+				use.card = sgs.Card_Parse("@SongciCard=.")
+				if use.to then use.to:append(friend) end
+				return
+			end
+		end
+	end
+	
+	self:sort(self.enemies, "handcard", true)
+	for _, enemy in ipairs(self.enemies) do
+		if enemy:getMark("@songci") == 0 and enemy:getHandcardNum() > enemy:getHp() and not enemy:isNude() then
+			if not ((self:hasSkills(sgs.lose_equip_skill, enemy) and enemy:getEquips():length() > 0) 
+			        or (self:isEquip("SilverLion", enemy) and enemy:isWounded())) then
+				use.card = sgs.Card_Parse("@SongciCard=.")
+				if use.to then use.to:append(enemy) end
+				return
+			end
+		end
+	end
+end
 
 sgs.ai_skill_invoke.chujia = function(self, data)
 	local lord = self.room:getLord()
