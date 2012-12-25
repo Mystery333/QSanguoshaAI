@@ -6,6 +6,102 @@ local function hasExplicitRebel(room)
     return false
 end
 
+function sgs.isGoodHp(player)
+	local goodHp=player:getHp()>1 or getCardsNum("Peach",player)>0 or getCardsNum("Analeptic",player)>0
+	for _, p in sgs.qlist(global_room:getOtherPlayers(player)) do
+		if sgs.compareRoleEvaluation(p,"rebel","loyalist")==sgs.compareRoleEvaluation(player,"rebel","loyalist") 
+				and getCardsNum("Peach",p)>0 and not global_room:getCurrent():hasSkill("wansha") then
+			return true
+		end
+	end		
+	return goodHp
+end
+
+function sgs.isGoodTarget(player)
+	if (self:hasSkills("jieming|yiji|guixin|fangzhu|neo_ganglie",player) and sgs.isGoodHp(player)) or (player:hasSkill("rende") and player:getHp()>=3) then
+		return false
+	else
+		return true
+	end 	
+end
+
+
+function sgs.getDefenseSlash(player)
+	local defense = getCardsNum("Jink",player)
+	local attacker = global_room:getCurrent()
+	
+	local hasEightDiagram=player:hasArmorEffect("EightDiagram") 
+	if player:hasSkill("bazhen") and not player:getArmor() and not player:hasFlag("wuqian") and player:getMark("qinggang") == 0 then
+		hasEightDiagram=true
+	end
+
+	local m = sgs.masochism_skill:split("|")
+	for _, masochism in ipairs(m) do
+		if player:hasSkill(masochism) and sgs.isGoodHp(player) then
+			defense = defense + 1.3
+		end
+	end
+	
+	if hasEightDiagram then 
+		defense = defense + 0.8 
+		if player:hasSkill("tiandu") then defense = defense + 0.6 end
+	end
+
+	if not sgs.isGoodTarget(player) then
+		defense = defense + 5
+	end
+	
+	local hujiaJink=0
+	if player:hasLordSkill("hujia") or (global_room:getLord():hasLordSkill("hujia") and player:hasSkill("weidi")) then
+			local lieges = global_room:getLieges("wei", player)			
+			for _, liege in sgs.qlist(lieges) do
+				if sgs.compareRoleEvaluation(liege,"rebel","loyalist")==sgs.compareRoleEvaluation(player,"rebel","loyalist") then
+					hujiaJink = hujiaJink + getCardsNum("Peach",liege)
+					if liege:hasArmorEffect("EightDiagram") then hujiaJink=hujiaJink + 0.8 end
+				end
+			end
+			defense = defense + hujiaJink
+	end
+
+	if player:getMark("@tied")>0 then
+		defense = defense + 1
+	end
+
+	if player:getHp()<=2 then
+		defense = defense - 0.4
+	end
+
+	if (player:getSeat()-attacker:getSeat()) % (global_room:alivePlayerCount())>=3 and player:getHandcardNum()<=2 and player:getHp()<=2 then
+		defense = defense - 0.6
+	end
+
+	if player:getHandcardNum()==0 and hujiaJink==0 and not player:hasSkill("kongcheng") then
+		local rate=hasEightDiagram and 0.5 or 1
+		if player:getHp()<=1 then defense = defense - 2 * rate end
+		if player:getHp()==2 then defense = defense - 1 * rate end		
+		if attacker:hasWeapon("GudingBlade") and not player:hasArmorEffect("SilverLion") then
+			defense = defense - 0.8
+			if not hasEightDiagram then defense = defense - 2 end
+		end
+	end
+
+	if player:isLord() then 
+		defense = defense -0.4
+		if sgs.isLordInDanger() then defense = defense - 0.7 end
+	end
+
+	if player:hasSkill("jijiu") then defense = defense -0.7 end
+	return defense
+end
+
+sgs.ai_compare_funcs["defenseSlash"] = function(a,b)
+	return sgs.getDefenseSlash(a) < sgs.getDefenseSlash(b)
+end
+
+
+
+
+
 function SmartAI:slashProhibit(card,enemy)
     local mode = self.room:getMode()
     if mode:find("_mini_36") then return self.player:hasSkill("keji") end
@@ -143,7 +239,7 @@ function SmartAI:useCardSlash(card, use)
     if ptarget and not self:slashProhibit(card, ptarget) then 
         table.insert(targets, ptarget)
     end
-    self:sort(self.enemies, "defense")
+	self:sort(self.enemies, "defenseSlash")
     for _, enemy in ipairs(self.enemies) do
         local slash_prohibit = false
         slash_prohibit = self:slashProhibit(card,enemy)
