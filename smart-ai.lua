@@ -1697,7 +1697,7 @@ function SmartAI:filterEvent(event, player, data)
 			if move.to_place==sgs.Player_PlaceHand and move.to then
 				local flag="visible"
 				if move.from and move.from:objectName()~=move.to:objectName() and place == sgs.Player_PlaceHand then					
-						flag=string.format("%s_%s_%s","visible",move.from:objectName(),move.to:objectName())					
+					flag=string.format("%s_%s_%s","visible",move.from:objectName(),move.to:objectName())					
 				end
 				global_room:setCardFlag(card_id,flag)
 			end
@@ -3007,7 +3007,8 @@ function SmartAI:getMaxCard(player)
 	local cards = player:getHandcards()
 	local max_card, max_point = nil, 0
 	for _, card in sgs.qlist(cards) do
-		if player:objectName() == self.player:objectName() or card:hasFlag("visible") then
+		local flag=string.format("%s_%s_%s","visible",global_room:getCurrent():objectName(),player:objectName())
+		if player:objectName() == self.player:objectName() or card:hasFlag("visible") or card:hasFlag(flag) then
 			local point = card:getNumber()
 			if point > max_point then
 				max_point = point
@@ -3029,7 +3030,8 @@ function SmartAI:getMinCard(player)
 	local cards = player:getHandcards()
 	local min_card, min_point = nil, 14
 	for _, card in sgs.qlist(cards) do
-		if player:objectName() == self.player:objectName() or card:hasFlag("visible") then
+		local flag=string.format("%s_%s_%s","visible",global_room:getCurrent():objectName(),player:objectName())
+		if player:objectName() == self.player:objectName() or card:hasFlag("visible") or card:hasFlag(flag) then
 			local point = card:getNumber()
 			if point < min_point then
 				min_point = point
@@ -3049,7 +3051,8 @@ function SmartAI:getKnownNum(player)
 		local cards = player:getHandcards()
 		local known = 0
 		for _, card in sgs.qlist(cards) do
-			if card:hasFlag("visible") then
+			local flag=string.format("%s_%s_%s","visible",global_room:getCurrent():objectName(),player:objectName())
+			if card:hasFlag("visible") or card:hasFlag(flag) then
 				known = known + 1
 			end
 		end
@@ -3132,7 +3135,8 @@ function getCardsNum(class_name, player)
 		return #getCards(class_name, player)
 	else		
 		for _, card in ipairs(cards) do
-			if card:hasFlag("visible") then
+			local flag=string.format("%s_%s_%s","visible",global_room:getCurrent():objectName(),player:objectName())
+			if card:hasFlag("visible") or card:hasFlag(flag) then
 				shownum = shownum + 1
 				if card:isKindOf(class_name) then
 					num = num + 1
@@ -3681,14 +3685,14 @@ function SmartAI:getAoeValue(card, player)
 		end
 	end
 	
-	local liuxie = self.room:findPlayerBySkillName("huangen") --ecup¡ý¡ý
+	local liuxie = self.room:findPlayerBySkillName("huangen") --ecupâ†“â†“
 	if liuxie then
 	    if not self:isFriend(liuxie) then
 	        bad = bad + liuxie:getHp() *190
 		else
 		    good = good + liuxie:getHp() *190
 		end
-	end                                                        --ecup¡ü¡ü
+	end                                                        --ecupâ†‘â†‘
 	
 	if player:hasSkill("jizhi") then
 		good = good + 40

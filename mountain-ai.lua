@@ -470,8 +470,9 @@ sgs.ai_skill_use_func.ZhibaCard = function(card, use, self)
 		local lord_max_num = 0, lord_max_card
 		local lord_min_num = 14, lord_min_card
 		local lord_cards = lord:getHandcards()
-		for _, lcard in sgs.qlist(lord_cards) do
-			if lcard:hasFlag("visible") and lcard:getNumber() > lord_max_num then
+		local flag=string.format("%s_%s_%s","visible",global_room:getCurrent():objectName(),player:objectName())
+		for _, lcard in sgs.qlist(lord_cards) do			
+			if (lcard:hasFlag("visible") or lcard:hasFlag(flag)) and lcard:getNumber() > lord_max_num then
 				lord_max_card = lcard
 				lord_max_num = lcard:getNumber()
 			end
