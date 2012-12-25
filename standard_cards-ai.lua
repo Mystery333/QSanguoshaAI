@@ -18,7 +18,15 @@ function sgs.isGoodHp(player)
 end
 
 function sgs.isGoodTarget(player)
-	if (self:hasSkills("jieming|yiji|guixin|fangzhu|neo_ganglie",player) and sgs.isGoodHp(player)) or (player:hasSkill("rende") and player:getHp()>=3) then
+	local arr = {"jieming","yiji","guixin","fangzhu","neo_ganglie"}
+	local m_skill=false
+	for _, masochism in ipairs(arr) do
+		if player:hasSkill(masochism) then
+			m_skill=true
+			break
+		end
+	end
+	if (m_skill and sgs.isGoodHp(player)) or (player:hasSkill("rende") and player:getHp()>=3) then
 		return false
 	else
 		return true
