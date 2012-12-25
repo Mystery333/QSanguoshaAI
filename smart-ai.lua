@@ -1656,21 +1656,55 @@ function SmartAI:filterEvent(event, player, data)
 				sgs.updateIntentions(from, to, callback, card)
 			end
 		end
-	elseif event == sgs.CardLost then
-		local move = data:toCardMove()
+	elseif event == sgs.CardsMoveOneTime then
+		local move = data:toMoveOneTime()
 		local from = move.from
-		local place = move.from_place
-		local card = sgs.Sanguosha:getCard(move.card_id)
-		if sgs.ai_snat_disma_effect then
-			sgs.ai_snat_disma_effect = false
-			local intention = 70
-			if place == sgs.Player_PlaceDelayedTrick then
-				if not card:isKindOf("Disaster") then intention = -intention else intention = 0 end
-			elseif place == sgs.Player_PlaceEquip then
-				if player:getLostHp() > 1 and card:isKindOf("SilverLion") then intention = -intention end
-				if self:hasSkills(sgs.lose_equip_skill, player) or card:isKindOf("GaleShell") then intention = 0 end
+		for i = 1, move.card_ids:length() do
+			local place = move.from_places:at(i)
+			local card_id=move.card_ids:at(i)
+			local card = sgs.Sanguosha:getCard(card_id)
+
+			if sgs.ai_snat_disma_effect then
+				sgs.ai_snat_disma_effect = false
+				local intention = 70
+				if place == sgs.Player_PlaceDelayedTrick then
+					if not card:isKindOf("Disaster") then intention = -intention else intention = 0 end
+					if card:isKindOf("YanxiaoCard") then intention=math.abs(intention) end
+				elseif place == sgs.Player_PlaceEquip then
+					if player:getLostHp() > 1 and card:isKindOf("SilverLion") then 
+						if self:hasSkills("zhiheng|guidao|qixi|mingce|jujian|zhiba", player) then 
+							intention = player:containsTrick("indulgence") and -intention or 0
+						else	
+							intention = player:isWeak() and  -intention  or -intention / 10 
+						end
+					end
+					if self:hasSkills(sgs.lose_equip_skill, player) then 
+						if player:isWeak() and (card:iskindOf("DefensiveHorse") or card:isKindOf("Armor")) then
+							intention=math.abs(intention)
+						else
+							intention = 0 
+						end						
+					end
+				elseif place == sgs.Player_PlaceHand then
+					if player:hasSkill("kongcheng") and player:isKongcheng() then						
+						intention = - (intention / 10)
+					end
+				end
+				self.room:writeToConsole("intention: "..intention)	
+				sgs.updateIntention(sgs.ai_snat_dism_from, from, intention)
 			end
-			sgs.updateIntention(sgs.ai_snat_dism_from, from, intention)
+
+			if move.to_place==sgs.Player_PlaceHand and move.to then
+				local flag="visible"
+				if move.from and move.from:objectName()~=move.to:objectName() and place == sgs.Player_PlaceHand then					
+						flag=string.format("%s_%s_%s","visible",move.from:objectName(),move.to:objectName())					
+				end
+				global_room:setCardFlag(card_id,flag)
+			end
+
+			if move.to_place==sgs.Player_DiscardPile then								
+				global_room:clearCardFlag(card)				
+			end
 		end
 	elseif event == sgs.StartJudge then
 		local judge = data:toJudge()
