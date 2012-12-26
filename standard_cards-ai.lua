@@ -18,14 +18,23 @@ function sgs.isGoodHp(player)
 end
 
 function sgs.isGoodTarget(player)
-	local arr = {"jieming","yiji","guixin","fangzhu","neo_ganglie"}
+	local arr = {"jieming","yiji","guixin","fangzhu","neo_ganglie","miji"}
 	local m_skill=false
+	local attacker = global_room:getCurrent()
 	for _, masochism in ipairs(arr) do
 		if player:hasSkill(masochism) then
 			m_skill=true
 			break
 		end
 	end
+		
+	if attacker:getHandcardNum()>3 and not attacker:hasSkill("kongcheng") and player:hasSkill("huilei") then
+		return sgs.compareRoleEvaluation(player, "rebel", "loyalist") == "rebel"
+	end
+	
+	if player:hasSkill("wuhun") then return false end
+	if attacker:isLord() and player:hasSkill("duanchang") and player:getHp()==1 then return false end
+
 	if (m_skill and sgs.isGoodHp(player)) or (player:hasSkill("rende") and player:getHp()>=3) then
 		return false
 	else
@@ -243,17 +252,9 @@ function SmartAI:useCardSlash(card, use)
     end
 
     local targets = {}
-    local ptarget = self:getPriorTarget()
-    if ptarget and not self:slashProhibit(card, ptarget) then 
-        table.insert(targets, ptarget)
-    end
 	self:sort(self.enemies, "defenseSlash")
     for _, enemy in ipairs(self.enemies) do
-        local slash_prohibit = false
-        slash_prohibit = self:slashProhibit(card,enemy)
-        if not slash_prohibit and enemy:objectName() ~= ptarget:objectName() then 
-            table.insert(targets, enemy)
-        end
+        if not self:slashProhibit(card,enemy) then table.insert(targets, enemy) end
     end
     
     for _, target in ipairs(targets) do

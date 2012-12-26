@@ -1240,6 +1240,9 @@ function SmartAI:objectiveLevel(player)
 	
 	if self.player:isLord() or self.role == "loyalist" then
 		if player:isLord() then return -2 end
+
+		if process:match("rebel") and rebel_num>1 and target_role=='renegade' then return -1 end
+
 		if rebel_num == 0 then
 			if sgs.evaluatePlayerRole(player) == "renegade" then
 				if self.player:isLord() and self:isWeak(player) then return 3
@@ -1272,6 +1275,7 @@ function SmartAI:objectiveLevel(player)
 		elseif sgs.compareRoleEvaluation(player, "rebel", "loyalist") == "rebel" then return 3
 		else return 0 end
 	elseif self.role == "rebel" then
+		if process:match("loyalist") and loyal_num>0 and target_role=='renegade' then return -1 end
 		if player:isLord() then return 5
 		elseif sgs.evaluatePlayerRole(player) == "loyalist" then return 5
 		elseif sgs.evaluateRoleTrends(player) == "loyalist" then return 3.5
