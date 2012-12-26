@@ -435,11 +435,16 @@ function SmartAI:useCardPeach(card, use)
     end
     if self.player:isLord() and (self.player:hasSkill("hunzi") and not self.player:hasSkill("yingzi")) 
         and self.player:getHp() < 4 and self.player:getHp() > peaches then return end
-    for _, friend in ipairs(self.enemies) do
+    for _, enemy in ipairs(self.enemies) do
         if (self:hasSkills(sgs.drawpeach_skill,enemy) and self.player:getHandcardNum() < 3) or (self.player:hasSkill("buqu") and self.player:getHp() < 1) then
             mustusepeach = true
         end
     end
+	
+	if self.player:hasSkill("rende") and #self.friends_noself>0 then
+		return
+	end
+
     for _, friend in ipairs(self.friends_noself) do
         if not mustusepeach then
             if friend:isLord() and friend:getHp() == 1 and not friend:hasSkill("buqu") and peaches < 2 then return end
