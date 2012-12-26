@@ -1091,8 +1091,8 @@ function sgs.gameProcess(room)
 	local danger = sgs.isLordInDanger()
 	local currentplayer = room:getCurrent()
 	for _, aplayer in sgs.qlist(room:getAlivePlayers()) do
-		--if not (aplayer:objectName() == currentplayer:objectName() and aplayer:getRole() == "renegade") then 
-		if not sgs.isRolePredictable() and sgs.evaluatePlayerRole(aplayer) == "rebel" then
+		local role=aplayer:getRole()
+		if role == "rebel" then
 			local rebel_hp
 			if aplayer:hasSkill("benghuai") and aplayer:getHp() > 4 then rebel_hp = 4
 			else rebel_hp = aplayer:getHp() end
@@ -1101,7 +1101,7 @@ function sgs.gameProcess(room)
 			if aplayer:getWeapon() and aplayer:getWeapon():getClassName() ~= "Weapon" then
 				rebel_value = rebel_value + math.min(1.5, math.min(sgs.weapon_range[aplayer:getWeapon():getClassName()],room:alivePlayerCount()/2)/2) * 0.4
 			end
-		elseif not sgs.isRolePredictable() and sgs.evaluatePlayerRole(aplayer) == "loyalist" then
+		elseif role == "loyalist" or role == "lord" then
 			local loyal_hp
 			if aplayer:hasSkill("benghuai") and aplayer:getHp() > 4 then loyal_hp = 4
 			else loyal_hp = aplayer:getHp() end
@@ -1110,8 +1110,7 @@ function sgs.gameProcess(room)
 			if aplayer:getWeapon() and aplayer:getWeapon():getClassName() ~= "Weapon" then
 				loyal_value = loyal_value + math.min(1.5, math.min(sgs.weapon_range[aplayer:getWeapon():getClassName()],room:alivePlayerCount()/2)/2) * 0.4
 			end
-		end
-		--end	
+		end		
 	end
 	local diff = loyal_value - rebel_value
 
@@ -1151,6 +1150,7 @@ function SmartAI:objectiveLevel(player)
 	local loyal_num = sgs.current_mode_players["loyalist"]
 	local renegade_num = sgs.current_mode_players["renegade"]
 	local process = sgs.gameProcess(self.room)
+	local target_role = player:getRole()
 
 	if self.role == "renegade" then
 		if rebel_num == 0 or loyal_num == 0 then
@@ -1158,8 +1158,7 @@ function SmartAI:objectiveLevel(player)
 				if rebel_num > 1 then
 					if player:isLord() then
 						return -2
-					elseif sgs.evaluatePlayerRole(player) == "rebel" or
-						sgs.evaluateRoleTrends(player) == "rebel" then
+					elseif target_role == "rebel" then
 						return 5
 					else
 						return 0
@@ -1167,7 +1166,7 @@ function SmartAI:objectiveLevel(player)
 				elseif renegade_num > 1 then
 					if player:isLord() then
 						return 0
-					elseif sgs.evaluatePlayerRole(player) == "renegade" then
+					elseif target_role == "renegade" then
 						return 3
 					else
 						return 5
@@ -1177,17 +1176,17 @@ function SmartAI:objectiveLevel(player)
 						if player:isLord() then
 							if not sgs.isLordHealthy() then return -1
 							else return 3.5 end
-						elseif sgs.evaluatePlayerRole(player) == "rebel" or
-							sgs.evaluateRoleTrends(player) == "rebel" then
+						elseif target_role == "rebel" then
 							return 0
 						else
 							return 5
 						end
 					elseif process:match("rebel") then
-						if sgs.evaluatePlayerRole(player) == "rebel" then 
-						if process == "rebel" then return 5 else return 3 end
-						elseif sgs.evaluateRoleTrends(player) == "rebel" then return 3
-						else return -1 end
+						if target_role == "rebel" then 
+							if process == "rebel" then return 5 else return 3 end
+						else 
+							return -1 
+						end
 					else
 						if player:isLord() then
 							return 0
@@ -1200,7 +1199,7 @@ function SmartAI:objectiveLevel(player)
 				if player:isLord() then
 					if not sgs.isLordHealthy() then return 0
 					else return 3 end
-				elseif sgs.evaluatePlayerRole(player) == "renegade" and renegade_num > 1 then
+				elseif target_role == "renegade" and renegade_num > 1 then
 					return 3
 				else
 					return 5
@@ -1215,21 +1214,19 @@ function SmartAI:objectiveLevel(player)
 					return 5
 				end
 			end	
-		elseif process == "neutral" or sgs.turncount < 2 then return 0
+		elseif process == "neutral" then return 0
 		elseif process:match("rebel") then
-			if sgs.evaluatePlayerRole(player) == "rebel" then 
-				if process == "rebel" then return 5 else return 3 end
-			elseif sgs.evaluateRoleTrends(player) == "rebel" then return 3
+			if target_role == "rebel" then 
+				if process == "rebel" then return 5 else return 3 end			
 			else return -1 end
 		elseif process:match("dilemma") then
-			if sgs.evaluatePlayerRole(player) == "rebel" then return 5
-			elseif sgs.evaluateRoleTrends(player) == "rebel" then return 3
+			if target_role == "rebel" then return 5
 			elseif player:isLord() then return -2
-			elseif sgs.evaluatePlayerRole(player) == "renegade" then return 0
+			elseif target_role == "renegade" then return 0
 			else return 5 end
 		else
-			if sgs.evaluatePlayerRole(player) == "rebel" then return -2
-			elseif sgs.evaluateRoleTrends(player) == "rebel" then return -1
+			if target_role == "rebel" then 
+				return -2			
 			else
 				if player:isLord() then
 					if not sgs.isLordHealthy() then  return 0
