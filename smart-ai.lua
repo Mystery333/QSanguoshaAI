@@ -658,57 +658,9 @@ function SmartAI:sortByCardNeed(cards)
 end
 
 function SmartAI:getPriorTarget()
-	local function inOneGroup(player)
-		if sgs.isRolePredictable() then return self:isFriend(player) end
-		if sgs.evaluatePlayerRole(player) == "unknown" then return true end
-		return sgs.evaluatePlayerRole(player) == sgs.evaluatePlayerRole(self.player) and not sgs.evaluatePlayerRole(self.player) == "renegade"
-	end
 	if #self.enemies == 0 then return end
-	local prior_targets = {}
-
-	for _, enemy in ipairs(self.enemies) do	
-		if not inOneGroup(enemy) and self:hasSkills(sgs.save_skill, player) then
-			table.insert(prior_targets, enemy)
-		end
-	end
-	
-	if #prior_targets > 0 then
-		self:sort(prior_targets, "threat")
-		return prior_targets[1]
-	end
-
-	self:sort(self.enemies, "defense")
-	for _, enemy in ipairs(self.enemies) do
-		if enemy:getHp() < 2 and not inOneGroup(enemy) then return enemy end
-	end
-
-	for _, enemy in ipairs(self.enemies) do
-		if enemy:isLord() and not inOneGroup(enemy) and sgs.isLordInDanger() then return enemy end
-	end
-
-	for _, enemy in ipairs(self.enemies) do	
-		if not inOneGroup(enemy) and self:hasSkills(sgs.priority_skill, player) then
-			table.insert(prior_targets, enemy)
-		end
-	end
-	
-	if #prior_targets > 0 then
-		self:sort(prior_targets, "threat")
-		return prior_targets[1]
-	end
-
-	self:sort(self.enemies, "defense")
-	for _, enemy in ipairs(self.enemies) do
-		if self:isWeak(enemy) and not inOneGroup(enemy) then return enemy end
-	end
-		
-	self:sort(self.enemies,"threat")
-	for _, enemy in ipairs(self.enemies) do
-		if not self:hasSkills(sgs.exclusive_skill, enemy) and not inOneGroup(enemy) then return enemy end
-	end
-	
-	self:sort(self.enemies, "hp")
-	return self.enemies[1]
+	self:sort(self.enemies, "defenseSlash")	
+	return self.enemies[1]	
 end
 
 function sgs.evaluatePlayerRole(player)
@@ -3241,6 +3193,8 @@ function getCardsNum(class_name, player)
 			return num + redpeach + (player:getHandcardNum()-shownum)/1.2
 		elseif player:hasSkill("longhun") then
 			return num+heartpeach+(player:getHandcardNum()-shownum)/3
+		elseif player:hasSkill("chunlao") then			
+			return num + player:getPile("wine"):length()
 		else 
 			return num
 		end 
@@ -3685,14 +3639,15 @@ function SmartAI:getAoeValue(card, player)
 		end
 	end
 	
-	local liuxie = self.room:findPlayerBySkillName("huangen") --ecup↓↓
+	local liuxie = self.room:findPlayerBySkillName("huangen")
 	if liuxie then
 	    if not self:isFriend(liuxie) then
 	        bad = bad + liuxie:getHp() *190
 		else
 		    good = good + liuxie:getHp() *190
 		end
-	end                                                        --ecup↑↑
+	end
+
 	
 	if player:hasSkill("jizhi") then
 		good = good + 40
