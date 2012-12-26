@@ -3860,9 +3860,15 @@ function SmartAI:useEquipCard(card, use)
 		if self:evaluateArmor(card) > self:evaluateArmor() then use.card = card end
 		return
 	elseif self:needBear() then return 
-	elseif card:isKindOf("OffensiveHorse") and self.player:hasSkill("rende") then
-		for _,friend in ipairs(self.friends_noself) do
-			if not friend:getOffensiveHorse() then return end
+	elseif card:isKindOf("OffensiveHorse") then
+		if self.player:hasSkill("rende") then
+			for _,friend in ipairs(self.friends_noself) do
+				if not friend:getOffensiveHorse() then return end
+			end
+		else
+			if self.player:getHandcardNum() <= self.player:getHp() and self:getCardsNum("Slash")+self:getCardsNum("Snatch") ==0 then 
+				return 
+			end
 		end
 	elseif card:isKindOf("Monkey") or self.lua_ai:useCard(card) then
 		use.card = card
