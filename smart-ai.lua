@@ -1383,7 +1383,14 @@ function SmartAI:updateRoleTargets()
 end
 
 function SmartAI:updatePlayers()
-	if self.role ~= self.player:getRole() then self.role = self.player:getRole() end
+	if self.role ~= self.player:getRole() then 		
+		if not ((self.role=='lord' and self.player:getRole()=='loyalist') or (self.role=='loyalist' and self.player:getRole()=='lord')) then			
+			sgs.role_evaluation[self.player:objectName()]["loyalist"]= 30
+			sgs.role_evaluation[self.player:objectName()]["rebel"]= 30
+			sgs.role_evaluation[self.player:objectName()]["renegade"]= 30
+		end
+		self.role = self.player:getRole()
+	end
 	for _, aflag in ipairs(sgs.ai_global_flags) do
 		sgs[aflag] = nil
 	end
