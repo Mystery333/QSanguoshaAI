@@ -56,7 +56,7 @@ function sgs.getDefenseSlash(player)
 	end
 
 	if not sgs.isGoodTarget(player) then
-		defense = defense + 5
+		defense = defense + 10
 	end
 	
 	local hujiaJink=0
@@ -961,8 +961,8 @@ sgs.dynamic_value.benefit.ExNihilo = true
 
 function SmartAI:getDangerousCard(who)
     local weapon = who:getWeapon()
-    if (weapon and weapon:isKindOf("Crossbow")) then return  weapon:getEffectiveId() end
-    if (weapon and weapon:isKindOf("Spear") and who:hasSkill("paoxiao"))  then return  weapon:getEffectiveId() end
+    if (weapon and weapon:isKindOf("Crossbow") and getCardsNum("Slash",who)>1) then return  weapon:getEffectiveId() end
+    if (weapon and weapon:isKindOf("Spear") and who:hasSkill("paoxiao") and who:getHandcardNum()>1)  then return  weapon:getEffectiveId() end
     if (weapon and weapon:isKindOf("Axe") and self:hasSkills("luoyi|pojun|jiushi|jiuchi", who)) then return weapon:getEffectiveId() end
     if (who:getArmor() and who:getArmor():isKindOf("EightDiagram") and who:getArmor():getSuit() == sgs.Card_Spade and who:hasSkill("leiji")) then return who:getArmor():getEffectiveId() end
     if (weapon and weapon:isKindOf("SPMoonSpear") and self:hasSkills("guidao|chongzhen|guicai|jilve", who)) then return weapon:getEffectiveId() end
@@ -1083,20 +1083,17 @@ function SmartAI:useCardSnatchOrDismantlement(card, use)
     end
 
     for _, friend in ipairs(friends) do
-        if (friend:containsTrick("indulgence") or friend:containsTrick("supply_shortage")) and self:hasTrickEffective(card, friend) then
+        if (friend:containsTrick("indulgence") or friend:containsTrick("supply_shortage")) and self:hasTrickEffective(card, friend) and not friend:hasSkill("qiaobian") then
             use.card = card
             if use.to then 
                 tricks = friend:getJudgingArea()
                 for _, trick in sgs.qlist(tricks) do
                     if trick:isKindOf("Indulgence") then
-                        if friend:getHp() < friend:getHandcardNum() then
+                        if friend:getHp() <= friend:getHandcardNum() or friend:isLord() or name == "snatch" then
                             sgs.ai_skill_cardchosen[name] = trick:getEffectiveId() 
                         end
                     end
                     if trick:isKindOf("SupplyShortage") then
-                        sgs.ai_skill_cardchosen[name] = trick:getEffectiveId() 
-                    end
-                    if trick:isKindOf("Indulgence") then
                         sgs.ai_skill_cardchosen[name] = trick:getEffectiveId() 
                     end
                 end				
@@ -1106,11 +1103,28 @@ function SmartAI:useCardSnatchOrDismantlement(card, use)
             return
         end
         if self:isEquip("SilverLion", friend) and self:hasTrickEffective(card, friend) and 
-        friend:isWounded() and not self:hasSkills("longhun|duanliang|qixi|guidao|lijian|jujian",friend) then
+        friend:isWounded() and not self:hasSkills(sgs.use_lion_skill,friend) then
             hasLion = true
             target = friend
         end
     end
+	
+	for i= 1,2,1 do
+		local targets={}
+		for _, enemy in ipairs(enemies) do
+			if not enemy:isNude() and self:hasTrickEffective(card, enemy) and not self:needKongcheng(enemy) and not enemy:hasSkill("kongcheng") then
+				if enemy:getHandcardNum() == i and sgs.getDefenseSlash(enemy)<3 and enemy:getHp()<=3 then 
+					use.card = card
+					if use.to then
+						sgs.ai_skill_cardchosen[name] = self:getCardRandomly(enemy, "h")
+						use.to:append(enemy)
+						self:speak("hostile", self.player:isFemale())
+					end
+					return	
+				end
+			end
+		end
+	end
 
     for _, enemy in ipairs(enemies) do
         if not enemy:isNude() and self:hasTrickEffective(card, enemy) then
@@ -1126,19 +1140,7 @@ function SmartAI:useCardSnatchOrDismantlement(card, use)
         end
     end
 
-    --[[for _, enemy in ipairs(enemies) do
-        if not enemy:isNude() and self:hasTrickEffective(card, enemy) and not self:needKongcheng(enemy) and not enemy:hasSkill("kongcheng") then
-            if enemy:getHandcardNum() == 1 then 
-                use.card = card
-                if use.to then
-                    sgs.ai_skill_cardchosen[name] = self:getCardRandomly(enemy, "h")
-                    use.to:append(enemy)
-                    self:speak("hostile", self.player:isFemale())
-                end
-                return	
-            end
-        end
-    end]]
+
 
     if hasLion then
         use.card = card

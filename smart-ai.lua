@@ -82,6 +82,8 @@ function setInitialTables()
 								"jieyin|renjie|zhiheng|rende|jujian|guicai|guidao|jilve|longhun|wusheng|longdan"
 	sgs.drawpeach_skill =       "tuxi|qiaobian"
 	sgs.recover_skill =         "rende|kuanggu|zaiqi|jieyin|qingnang|yinghun"
+	sgs.use_lion_skill =         "longhun|duanliang|qixi|guidao|lijian|jujian|zhiheng|mingce|zhiba"
+	
 	
 	for _, aplayer in sgs.qlist(global_room:getAllPlayers()) do
 		table.insert(sgs.role_evaluation, aplayer:objectName())
@@ -1631,7 +1633,7 @@ function SmartAI:filterEvent(event, player, data)
 					if card:isKindOf("YanxiaoCard") then intention=math.abs(intention) end
 				elseif place == sgs.Player_PlaceEquip then
 					if player:getLostHp() > 1 and card:isKindOf("SilverLion") then 
-						if self:hasSkills("zhiheng|guidao|qixi|mingce|jujian|zhiba", player) then 
+						if self:hasSkills(sgs.use_lion_skill, player) then 
 							intention = player:containsTrick("indulgence") and -intention or 0
 						else	
 							intention = player:isWeak() and  -intention  or -intention / 10 
@@ -1648,9 +1650,8 @@ function SmartAI:filterEvent(event, player, data)
 					if player:hasSkill("kongcheng") and player:isKongcheng() then						
 						intention = - (intention / 10)
 					end
-				end
-				self.room:writeToConsole("intention: "..intention)	
-				sgs.updateIntention(sgs.ai_snat_dism_from, from, intention)
+				end				
+				if from then sgs.updateIntention(sgs.ai_snat_dism_from, from, intention) end
 			end
 
 			if move.to_place==sgs.Player_PlaceHand and move.to then
@@ -1923,7 +1924,7 @@ function SmartAI:askForCardChosen(who, flags, reason)
 	end
 
 	if self:isFriend(who) then
-		if flags:match("j") and not who:containsTrick("YanxiaoCard") then
+		if flags:match("j") and not who:containsTrick("YanxiaoCard") and not who:hasSkill("qiaobian") then
 			local tricks = who:getCards("j")
 			local lightning, indulgence, supply_shortage
 			for _, trick in sgs.qlist(tricks) do
@@ -1955,20 +1956,18 @@ function SmartAI:askForCardChosen(who, flags, reason)
 		end
 
 		if flags:match("e") then
-			local zhangjiao = self.room:findPlayerBySkillName("leiji")
-			if who:isWounded() and self:isEquip("SilverLion", who) and (not zhangjiao or self:isFriend(zhangjiao))
-				and not self:hasSkills("qixi|duanliang", who) then return who:getArmor():getId() end
+			if who:isWounded() and self:isEquip("SilverLion", who)
+				and not self:hasSkills(sgs.use_lion_skill, who) then return who:getArmor():getId() end
 			if self:evaluateArmor(who:getArmor(), who)<-5 then return who:getArmor():getId() end
-			if self:hasSkills(sgs.lose_equip_skill, who) then
-				local equips = who:getEquips()
-				if not equips:isEmpty() then
-					return equips:at(0):getId()
-				end
+			if self:hasSkills(sgs.lose_equip_skill, who) and self:isWeak(who) then
+				if who:getWeapon() then return who:getWeapon():getId() end
+				if who:getArmor() and who:getArmor():isKindOf("Vine") then return who:getArmor():getId() end
+				if who:getOffensiveHorse() then return who:getOffensiveHorse():getId() end				
 			end
 		end
 	else
 		if flags:match("e") then
-			if self:isEquip("Crossbow",who) and who:getWeapon() then
+			if self:isEquip("Crossbow",who) and who:getWeapon() and getCardsNum("Slash", who) > 1 then
 				for _, friend in ipairs(self.friends) do
 					if who:distanceTo(friend) <= 1 then return who:getWeapon():getId() end
 				end
