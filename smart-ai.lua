@@ -64,6 +64,8 @@ sgs.ai_choicemade_filter = 	{
 	playerChosen =			{}
 }
 
+sgs.card_lack = {}
+
 function setInitialTables()
 	sgs.current_mode_players = 	{loyalist = 0, rebel = 0, renegade = 0}
 	sgs.ai_type_name = 			{"Skill", "Basic", "Trick", "Equip"}
@@ -83,6 +85,7 @@ function setInitialTables()
 	sgs.drawpeach_skill =       "tuxi|qiaobian"
 	sgs.recover_skill =         "rende|kuanggu|zaiqi|jieyin|qingnang|yinghun"
 	sgs.use_lion_skill =         "longhun|duanliang|qixi|guidao|lijian|jujian|zhiheng|mingce|zhiba"
+	
 	
 	
 	for _, aplayer in sgs.qlist(global_room:getAllPlayers()) do
@@ -134,6 +137,7 @@ function SmartAI:initialize(player)
 	self.retain = 2
 	self.keepValue = {}
 	self.kept = {}
+	
 	if not sgs.initialized then
 		sgs.initialized = true
 		sgs.ais = {}
@@ -150,6 +154,11 @@ function SmartAI:initialize(player)
 	end
 
 	sgs.ais[player:objectName()] = self
+
+	sgs.card_lack[player:objectName()] = {}
+	sgs.card_lack[player:objectName()]["Slash"] = 0
+	sgs.card_lack[player:objectName()]["Jink"] = 0
+
 	if self.player:isLord() and not sgs.GetConfig("EnableHegemony", false) then
 		if (sgs.ai_chaofeng[self.player:getGeneralName()] or 0) < 3 then
 			sgs.ai_chaofeng[self.player:getGeneralName()] = 3
@@ -1655,9 +1664,19 @@ function SmartAI:filterEvent(event, player, data)
 				if from then sgs.updateIntention(sgs.ai_snat_dism_from, from, intention) end
 			end
 
+			if move.to_place==sgs.Player_PlaceHand and move.to then
+				if card:hasFlag("visible") then
+					if is_a_slash(move.to,card) then sgs.card_lack[move.to:objectName()]["Slash"]=0 end
+					if is_a_jink(move.to,card) then sgs.card_lack[move.to:objectName()]["Jink"]=0 end
+				else
+					sgs.card_lack[move.to:objectName()]["Slash"]=0
+					sgs.card_lack[move.to:objectName()]["Jink"]=0
+				end
+			end
+
 			if move.to_place==sgs.Player_PlaceHand and move.to and place~=sgs.Player_DrawPile then
 				local flag="visible"
-				if move.from and move.from:objectName()~=move.to:objectName() and place == sgs.Player_PlaceHand then					
+				if move.from and move.from:objectName()~=move.to:objectName() and place == sgs.Player_PlaceHand and not card:hasFlag("visible") then
 					flag=string.format("%s_%s_%s","visible",move.from:objectName(),move.to:objectName())					
 				end
 				global_room:setCardFlag(card_id,flag)
@@ -1666,6 +1685,7 @@ function SmartAI:filterEvent(event, player, data)
 			if move.to_place==sgs.Player_DiscardPile then								
 				global_room:clearCardFlag(card)				
 			end
+			
 		end
 	elseif event == sgs.StartJudge then
 		local judge = data:toJudge()
@@ -1682,6 +1702,24 @@ function SmartAI:filterEvent(event, player, data)
 	elseif event == sgs.GameStart then
 		sgs.turncount = 0
 	end
+end
+
+function is_a_jink(player, card)	
+	if card:isKindOf("Jink") then return true end		
+	if player:hasSkill("qingguo") and card:isBlack() then return true end			
+	if player:hasSkill("longdan") and card:isKindOf("Slash") then return true end
+	if player:hasSkill("longhun") and card:getSuit()==sgs.Card_Club then return true end
+	return false
+end
+
+function is_a_slash(player, card)
+	if card:isKindOf("Slash") then return true end		
+	if player:hasSkill("wusheng") and card:isRed() then return true end			
+	if player:hasSkill("wushen") and card:getSuit()==sgs.Card_Heart then return true end
+	if player:hasSkill("longdan") and card:isKindOf("Jink") then return true end
+	if player:hasSkill("gongqi") and card:isKindOf("EquipCard") then return true end
+	if player:hasSkill("longhun") and card:getSuit()==sgs.Card_Diamond then return true end
+	return false
 end
 
 function SmartAI:askForSuit(reason)
@@ -2114,11 +2152,15 @@ function SmartAI:askForCard(pattern, prompt, data)
 		if ret then return ret end
 	end
 	
+	local card
 	if pattern == "slash" then
-		return sgs.ai_skill_cardask.nullfilter(self, data, pattern, target) or self:getCardId("Slash") or "."
+		card= sgs.ai_skill_cardask.nullfilter(self, data, pattern, target) or self:getCardId("Slash") or "."		
+		if card=="." then sgs.card_lack[self.player:objectName()]["Slash"] = 1 end
 	elseif pattern == "jink" then
-		return sgs.ai_skill_cardask.nullfilter(self, data, pattern, target) or self:getCardId("Jink") or "."
+		card= sgs.ai_skill_cardask.nullfilter(self, data, pattern, target) or self:getCardId("Jink") or "."
+		if card=="." then sgs.card_lack[self.player:objectName()]["Jink"] = 1 end
 	end
+	return card
 end
 
 function SmartAI:askForUseCard(pattern, prompt)
@@ -3867,7 +3909,12 @@ function SmartAI:useEquipCard(card, use)
 			end
 		else
 			if self.player:getHandcardNum() <= self.player:getHp() and self:getCardsNum("Slash")+self:getCardsNum("Snatch") ==0 then 
-				return 
+				return
+			else
+				if self.lua_ai:useCard(card) then 
+					use.card = card 
+					return
+				end
 			end
 		end
 	elseif card:isKindOf("Monkey") or self.lua_ai:useCard(card) then

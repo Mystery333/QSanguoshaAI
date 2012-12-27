@@ -45,9 +45,11 @@ function sgs.isGoodTarget(player)
 end
 
 
-function sgs.getDefenseSlash(player)
-	local defense = getCardsNum("Jink",player)
+function sgs.getDefenseSlash(player)	
 	local attacker = global_room:getCurrent()
+	local defense = getCardsNum("Jink",player)
+
+	if sgs.card_lack[player:objectName()]["Jink"] == 1 then defense =0 end
 	
 	local hasEightDiagram=player:hasArmorEffect("EightDiagram") 
 	if player:hasSkill("bazhen") and not player:getArmor() and not player:hasFlag("wuqian") and player:getMark("qinggang") == 0 then
@@ -452,11 +454,12 @@ function SmartAI:useCardPeach(card, use)
 		use.card = card
 		return 
 	end
-
-	if friend:isLord() and friend:getHp() <= 2 and not friend:hasSkill("buqu") and peaches < 2 then return end
+	
+	local lord= self.room:getLord()
+	if self:isFriend(lord) and lord:getHp() <= 2 and not lord:hasSkill("buqu") and peaches < 2 then return end
 
 	self:sort(self.friends, "hp")
-	if self.friends[1]:objectName()==self.player:objectName() or self.player.getHp()<2 then
+	if self.friends[1]:objectName()==self.player:objectName() or self.player:getHp()<2 then
 		use.card = card
 		return		
 	end
