@@ -1655,7 +1655,7 @@ function SmartAI:filterEvent(event, player, data)
 				if from then sgs.updateIntention(sgs.ai_snat_dism_from, from, intention) end
 			end
 
-			if move.to_place==sgs.Player_PlaceHand and move.to then
+			if move.to_place==sgs.Player_PlaceHand and move.to and place~=sgs.Player_DrawPile then
 				local flag="visible"
 				if move.from and move.from:objectName()~=move.to:objectName() and place == sgs.Player_PlaceHand then					
 					flag=string.format("%s_%s_%s","visible",move.from:objectName(),move.to:objectName())					
