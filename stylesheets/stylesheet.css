@@ -72,12 +72,12 @@ h1.title {
   font-size: 60px;
   font-weight: bold;
   font-style: italic;
-  font-family:Georgia, serif;
+  font-family:Verdana,Arial,Helvetica,sans-serif;
   text-align: center;
 }
 
 .wrapper {
-  width: 675px;
+  width: 1000px;
   margin: 0 auto;
 }
 
@@ -110,6 +110,18 @@ p.tagline {
 .download-bar .inner {
   overflow: hidden;
 }
+
+.inner a {
+	padding-left:20px;
+	padding-right:40px;
+}
+
+.download a {
+	color: blue;
+	padding-left:20px;
+	padding-right:40px;
+}
+
 
 .download-bar .watch-fork iframe {
   display: block;
@@ -186,7 +198,7 @@ p.tagline {
   position: fixed;
   top: 0;
   left: 50%;
-  width: 693px;
+  width: 1000px;
   margin-left: -352px;
   background: #222;
   border: 5px solid #444;
@@ -250,6 +262,10 @@ a.tar span {
   -moz-opacity: 0.8;
   filter:alpha(opacity=8);
   -webkit-transition: opacity ease-in-out 0.3s;
+}
+
+span.desc{
+	color: #bbbbbb;
 }
 
 a.code {
@@ -400,6 +416,19 @@ footer .owner p a {
   word-wrap: break-word;
   background-color:#3b3b3b;
   color: #d6d6d6;
+}
+
+pre.changelog{
+  padding: 10px 70px 10px 0;
+  margin-left: 5px;
+  margin-right: 5px;
+  font-family: 'Monaco', 'Lucida Console', monospace;
+  font-size: 13px;
+  line-height: 20px;
+  box-shadow: inset 0 0 0px #000;
+  word-wrap: break-word;
+  background-color:#ffffff;
+  color: #000000;
 }
 
 .markdown-body pre.lines {

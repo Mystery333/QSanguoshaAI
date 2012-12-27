@@ -8,11 +8,8 @@
 
   <link rel="stylesheet" href="stylesheets/stylesheet.css" media="screen"/>
   <link rel="stylesheet" href="stylesheets/pygment_trac.css"/>
-  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-  <script type="text/javascript" src="javascripts/script.js"></script>
-
-  <title>Qsanguoshaai</title>
-  <meta name="description" content="新神杀AI改进项目，基于贴吧置顶帖 QSanguoshaTest1221[常用LUA整合版]">
+  <title>新神杀AI再起计划</title>
+  <meta name="description" content="新神杀AI再起项目，基于贴吧置顶帖 QSanguoshaTest1221[常用LUA整合版]">
 
   <meta name="viewport" content="width=device-width,initial-scale=1">
 
@@ -22,52 +19,49 @@
 
   <div class="wrapper">
     <header>
-      <h1 class="title">Qsanguoshaai</h1>
+      <h1 class="title">新神杀AI再起计划</h1>
     </header>
     <div id="container">
-      <p class="tagline">新神杀AI改进项目，基于贴吧置顶帖 QSanguoshaTest1221[常用LUA整合版]</p>
+      <p class="tagline">新神杀AI再起项目，适应太阳神三国杀测试版的所有版本</p>
       <div id="main" role="main">
-        <div class="download-bar">
-        <div class="inner">
-          <a href="https://github.com/haveatry823/QSanguoshaAI/tarball/master" class="download-button tar"><span>Download</span></a>
-          <a href="https://github.com/haveatry823/QSanguoshaAI/zipball/master" class="download-button zip"><span>Download</span></a>
-          <a href="https://github.com/haveatry823/QSanguoshaAI" class="code">View Qsanguoshaai on GitHub</a>
-        </div>
+        <div class="download-bar">	
+		<span class="desc">下载压缩包后解压,复制所有文件，覆盖游戏目录下的 lua/ai 目录即可, 记得覆盖之前先备份原来的文件</span>
         <span class="blc"></span><span class="trc"></span>
         </div>
-        <article class="markdown-body">
-          <h3>Welcome to GitHub Pages.</h3>
+        <article class="markdown-body">          
+<p class="download">
+ <b>下载地址：</b>	
+ <a href="https://github.com/haveatry823/QSanguoshaAI/zipball/master">稳定版AI(推荐)</a>
+ <a href="https://github.com/haveatry823/QSanguoshaAI/zipball/dev">开发版AI(测试用)</a>
+ QQ群：191748263
+ <a href="#" onclick="return !!alert('暂时还没有')">贴吧讨论帖</a>
+ <a href="https://github.com/haveatry823/QSanguoshaAI/">项目地址</a>
+</p>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
 
-<h3>Designer Templates</h3>
+<h3>更新日志</h3>
+<pre class="changelog">
+1227-1. 禁AI透视眼，删除所有AI直接读取其他角色手牌的代码
+1227-2. 调整藤甲的优先级，防止AI无脑装藤甲
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+1227-3. 卡牌移动的可视问题
+        五谷，火攻，黄天对所有人是可见的，仁德，遗迹，好施给牌后，刘备郭嘉是知道自己给出的是哪些牌的 
 
-<h3>Rather Drive Stick?</h3>
-
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
-
-<h3>Authors and Contributors</h3>
-
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
-
-<h3>Support or Contact</h3>
-
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+1227-4. 出杀策略问题，优先杀裸体的，防御低的
+1227-5. 刘备吃桃问题，AI给残血队友留桃
+1227-6. 优化顺拆策略，优先拆虚弱敌人的手牌
+1227-7. 毒菜，神关，马谡也是可以杀的
+1227-8. 更懂得平衡局面的内，以及忠反弱势的时候不搞内
+1227-9. 当万箭或者被杀时，对方没有出闪时，记录这个情况(以后优先杀他了)。南蛮不出杀也是(决斗热门人选)
+</pre>
         </article>
       </div>
     </div>
     <footer>
       <div class="owner">
-      <p><a href="https://github.com/haveatry823" class="avatar"><img src="https://secure.gravatar.com/avatar/6d60b3f63031aac9db2abfdcbabe0fdf?s=30&amp;d=https://a248.e.akamai.net/assets.github.com%2Fimages%2Fgravatars%2Fgravatar-user-420.png" width="48" height="48"/></a> <a href="https://github.com/haveatry823">haveatry823</a> maintains <a href="https://github.com/haveatry823/QSanguoshaAI">Qsanguoshaai</a></p>
+      <p>本  <a href="https://github.com/haveatry823/QSanguoshaAI"> 项目 </a> 由 <a href="https://github.com/haveatry823"> haveatry823 </a> 维护 </p>
 
 
       </div>
