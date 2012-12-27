@@ -28,12 +28,14 @@ function sgs.isGoodTarget(player)
 		end
 	end
 		
-	if attacker:getHandcardNum()>3 and not attacker:hasSkill("kongcheng") and player:hasSkill("huilei") then
+	if player:hasSkill("huilei") and player:getHp()==1 then
+		if attacker:getHandcardNum()>=4 then return false end
 		return sgs.compareRoleEvaluation(player, "rebel", "loyalist") == "rebel"
 	end
 	
-	if player:hasSkill("wuhun") then return false end
-	if attacker:isLord() and player:hasSkill("duanchang") and player:getHp()==1 then return false end
+	if player:hasSkill("wuhun") and (attacker:isLord() or player:getHp()<=2) then 
+		return false
+	end
 
 	if (m_skill and sgs.isGoodHp(player)) or (player:hasSkill("rende") and player:getHp()>=3) then
 		return false
