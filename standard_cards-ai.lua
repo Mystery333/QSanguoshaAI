@@ -456,7 +456,10 @@ function SmartAI:useCardPeach(card, use)
 	end
 	
 	local lord= self.room:getLord()
-	if self:isFriend(lord) and lord:getHp() <= 2 and not lord:hasSkill("buqu") and peaches < 2 then return end
+	if self:isFriend(lord) and lord:getHp() <= 2 and not lord:hasSkill("buqu") and peaches < 2 then 
+		if self.player:isLord() then use.card = card end
+		return 
+	end
 
 	self:sort(self.friends, "hp")
 	if self.friends[1]:objectName()==self.player:objectName() or self.player:getHp()<2 then
