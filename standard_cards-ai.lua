@@ -446,12 +446,22 @@ function SmartAI:useCardPeach(card, use)
 		return
 	end
 
-    for _, friend in ipairs(self.friends_noself) do
-        if not mustusepeach then
-            if friend:isLord() and friend:getHp() == 1 and not friend:hasSkill("buqu") and peaches < 2 then return end
-            if (self.player:getHp()-friend:getHp() > peaches) and (friend:getHp() < 3) and not friend:hasSkill("buqu") then return end
-        end
-    end
+	if mustusepeach then
+		use.card = card
+		return 
+	end
+
+	if friend:isLord() and friend:getHp() <= 2 and not friend:hasSkill("buqu") and peaches < 2 then return end
+
+	self:sort(self.friends, "hp")
+	if self.friends[1]:objectName()==self.player:objectName() or self.player.getHp()<2 then
+		use.card = card
+		return		
+	end
+
+	if #self.friends>1 and self.friends[2]:getHp()<3 and not self.friends[2]:hasSkill("buqu") then
+		return
+	end
 
     if self.player:hasSkill("jieyin") and self:getOverflow() > 0 then
         self:sort(self.friends, "hp")
