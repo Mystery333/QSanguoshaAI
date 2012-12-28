@@ -667,12 +667,130 @@ function SmartAI:sortByCardNeed(cards)
 
 	table.sort(cards, compare_func)
 end
-
+--[[
+	策略：按照出杀的效果产生对每个目标的点数，按点数进行排序。
+	（话说这个真是只针对杀的？感觉是确定集火目标的……先按杀写了。）
+]]--
 function SmartAI:getPriorTarget()
-	if #self.enemies == 0 then return end
-	self:sort(self.enemies, "defenseSlash")	
-	return self.enemies[1]	
+	if #self.enemies == 0 then return end--如果没有敌人则返回
+	self:sort(self.enemies, "defenseSlash")	--按防御杀的能力排序（？没有找到具体代码……）
+	--return self.enemies[1]	
+	local source = self.player --自己，杀的来源
+	local points = {} --攻击效果点数
+	for index=1, #self.enemies, 1 do
+		local enemy = self.enemies[index] --当前判断的敌人
+		local point = 0
+		local distlimit = true --距离限制
+		if source:hasFlag("tianyi_success") or source:hasFlag("xianzhen_success") then
+			distlimit = false --天义或陷阵成功则距离不限
+		end
+		if source:canSlash(enemy, nil, distlimit) then --如果可以杀
+			if not self:damageIsEffective(enemy) then --如果伤害无效
+				point = -49
+			else
+				if enemy:isKongcheng() then --如果目标没有手牌
+					point = point + 20 --考虑到canSlash会消除空城技能的影响，此时的无手牌肯定是没有空城技能的。
+				end
+				if enemy:isChained() then --如果目标被铁锁连环
+					point = point + 12 --此处要是能判断杀是否为属性杀就更好了。
+				end
+				if self:getDamagedEffects(self, enemy) then --如果伤害有不利影响（刚烈、恩怨、放逐等）
+					point = point - 5
+				end
+				local jink_count = self:getCardsNum("jink", enemy, "he", true) --获取闪的数目
+				if jink_count < 1 then --如果没有闪
+					if enemy:hasSkill("jieming") then --如果当前目标有节命技能
+						local jmcf = self:getJiemingChaofeng(enemy) --获取节命嘲讽值
+						if jmcf > 0 then --如果补牌不超过2张
+							point = point + 3
+						else
+							point = point - 20
+						end
+					else --只是没有闪而已
+						point = point + 7
+					end
+				else--如果有闪
+					if enemy:hasSkill("leiji") then --如果当前目标有雷击技能
+						point = point - 7
+					else --只是有闪而已
+						point = point - 5
+					end
+				end
+				local armor = enemy:getArmor() --获取装备
+				local na_mark = enemy:hasFlag("qinggang") or enemy:hasFlag("wuqian") --是否无视防具
+				if armor then --如果有防具
+					if armor:isKindOf("SilverLion") then --如果有白银狮子
+						if enemy:getHp() <= 1 then --如果体力很低
+							if enemy:hasSkill("longhun") then --如果目标有龙魂技能
+								point = point - 8
+							else --没有龙魂技能
+								point = point + 2
+							end
+						else --体力正常或轻伤
+							point = point - 1
+						end
+					else --其它装备
+						if not na_mark then --如果并非无视防具
+							point = point - 4
+						end
+					end
+				else --如果没有防具
+					if enemy:hasSkill("bazhen") and not na_mark then --如果目标有八阵技能且不能无视防具
+						point = point - 4
+					else --真的没有防具
+						point = point + 9
+					end
+				end
+				if enemy:getMark("@gale") > 0 then --如果目标有狂风标记
+					point = point + 1
+				end
+			end
+		else --不在攻击范围内
+			point = -99
+		end
+		point = point - index*3 --点数修正，参考了之前按防御杀的能力排序结果。
+		table.insert(points, point) --当前点数
+	end
+	local max_point = -999
+	local target_index = 0
+	for index=1, #points, 1 do --逐一扫描，找出点数最大的目标
+		if points[index] > max_point then
+			max_point = points[index]
+			target_index = index
+		end
+		--[[For Console:
+		local name = self.enemies[index]:getGeneralName()
+		local pt = points[index]
+		self.room:writeToConsole(string.format("player:%s points:%d", name, pt))
+		]]--
+	end
+	if target_index > 0 then 
+		return self.enemies[target_index]
+	end
 end
+--[[重写一份，按确定集火目标的策略]]--
+--[[
+function SmartAI:getPriorTarget()
+	if #self.enemies == 0 then return end--如果没有敌人则返回
+	--计算防御强度排名、嘲讽值、手牌数目、体力等
+	local points_defense = {}
+	local points_chaofeng = {}
+	local handcard_count = {}
+	local points_hp = {}
+	self:sort(self.enemies, "defense")
+	for index=1, #self.enemies, 1 do
+		local enemy = self.enemies[index]
+		local defense = index
+		table.insert(points_defense, defense)
+		local chaofeng = sgs.ai_chaofeng[enemy:getGeneralName()] or 0
+		table.insert(points_chaofeng, chaofeng)
+		local count = enemy:getHandcardNum()
+		table.insert(handcard_count, count)
+		local hp = enemy:getHp()
+		table.insert(points_hp, hp)
+	end
+end
+]]--
 
 function sgs.evaluatePlayerRole(player)
 	if not player then global_room:writeToConsole("Player is empty in role's evaluation!") return end
@@ -2938,6 +3056,11 @@ function SmartAI:damageIsEffective(player, nature, source)
 	if player:hasSkill("ayshuiyong") and nature == sgs.DamageStruct_Fire then  --ecup
 		return false
 	end                                                                                                                  --ecup
+	
+	if player:hasSkill("fenyong") and player:getMark("@fenyong") > 0 then
+		return false--对已愤勇的☆SP夏侯惇伤害无效
+	end
+	
 	return true
 end
 
