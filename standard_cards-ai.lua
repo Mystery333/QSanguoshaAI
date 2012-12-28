@@ -21,6 +21,9 @@ function sgs.isGoodTarget(player)
 	local arr = {"jieming","yiji","guixin","fangzhu","neo_ganglie","miji"}
 	local m_skill=false
 	local attacker = global_room:getCurrent()
+
+	if attacker:hasSkill("jueqing") then return true end
+
 	for _, masochism in ipairs(arr) do
 		if player:hasSkill(masochism) then
 			m_skill=true
@@ -51,14 +54,15 @@ function sgs.getDefenseSlash(player)
 
 	if sgs.card_lack[player:objectName()]["Jink"] == 1 then defense =0 end
 	
-	local hasEightDiagram=player:hasArmorEffect("EightDiagram") 
-	if player:hasSkill("bazhen") and not player:getArmor() and not player:hasFlag("wuqian") and player:getMark("qinggang") == 0 then
+	local hasEightDiagram=false
+	local ignoreArmor = attacker:hasUsed("WuqianCard") or attacker:hasWeapon("QinggangSword") or attacker:hasFlag("xianzhen_success")
+	if (player:hasArmorEffect("EightDiagram") or (player:hasSkill("bazhen") and not player:getArmor())) and not ignoreArmor then
 		hasEightDiagram=true
 	end
 
 	local m = sgs.masochism_skill:split("|")
 	for _, masochism in ipairs(m) do
-		if player:hasSkill(masochism) and sgs.isGoodHp(player) then
+		if player:hasSkill(masochism) and sgs.isGoodHp(player) and not attacker:hasSkill("jueqing") then
 			defense = defense + 1.3
 		end
 	end
@@ -93,25 +97,26 @@ function sgs.getDefenseSlash(player)
 	end
 
 	if (player:getSeat()-attacker:getSeat()) % (global_room:alivePlayerCount())>=3 and player:getHandcardNum()<=2 and player:getHp()<=2 then
-		defense = defense - 0.6
+		defense = defense - 0.4
 	end
 
-	if player:getHandcardNum()==0 and hujiaJink==0 and not player:hasSkill("kongcheng") then
-		local rate=hasEightDiagram and 0.5 or 1
-		if player:getHp()<=1 then defense = defense - 2 * rate end
-		if player:getHp()==2 then defense = defense - 1 * rate end		
-		if attacker:hasWeapon("GudingBlade") and not player:hasArmorEffect("SilverLion") then
-			defense = defense - 0.8
-			if not hasEightDiagram then defense = defense - 2 end
+	if player:getHandcardNum()==0 and hujiaJink==0 and not player:hasSkill("kongcheng") then		
+		if player:getHp()<=1 then defense = defense - 1  end
+		if player:getHp()==2 then defense = defense - 0.5 end
+		if not hasEightDiagram then defense = defense - 2 end
+		if attacker:hasWeapon("GudingBlade") and (not player:hasArmorEffect("SilverLion") or ignoreArmor) then
+			defense = defense - 1			
 		end
 	end
+	
+	if player:hasArmorEffect("Vine") and not ignoreArmor then defense = defense - 0.5 end	
 
 	if player:isLord() then 
 		defense = defense -0.4
 		if sgs.isLordInDanger() then defense = defense - 0.7 end
 	end
 
-	if player:hasSkill("jijiu") then defense = defense -0.7 end
+	if player:hasSkill("jijiu") then defense = defense -0.5 end
 	return defense
 end
 

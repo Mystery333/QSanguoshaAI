@@ -3214,34 +3214,34 @@ function getCardsNum(class_name, player)
 	if class_name == "Slash" then
 		local slashnum
 		if player:hasSkill("wusheng") then
-			slashnum = redslash + num + (player:getHandcardNum()-shownum)/1.2
+			slashnum = redslash + num + (player:getHandcardNum()-shownum)*0.7
 		elseif player:hasSkill("wushen") then
-			slashnum = heartslash + num + (player:getHandcardNum()-shownum)/1.5
+			slashnum = heartslash + num + (player:getHandcardNum()-shownum)*0.5
 		elseif player:hasSkill("longhun") then
-			slashnum = diamondcard + num + (player:getHandcardNum()-shownum)/3
+			slashnum = diamondcard + num + (player:getHandcardNum()-shownum)*0.5
 		elseif player:hasSkill("gongqi") then
-			slashnum = num+(player:getHandcardNum()-shownum)/2+equipcard
+			slashnum = equipcard + num + (player:getHandcardNum()-shownum)*0.5
 		elseif player:hasSkill("longdan") then
-			slashnum = slashjink+(player:getHandcardNum()-shownum)/1.5
+			slashnum = slashjink+(player:getHandcardNum()-shownum)*0.72
 		else
-			slashnum = num+(player:getHandcardNum()-shownum)/2
+			slashnum = num+(player:getHandcardNum()-shownum)*0.35
 		end
 		return player:hasSkill("wushuang") and slashnum*2 or slashnum
 	elseif class_name == "Jink" then
 		if player:hasSkill("qingguo") then 
-			return blackcard + num + (player:getHandcardNum()-shownum)/1.2
+			return blackcard + num + (player:getHandcardNum()-shownum)*0.85
 		elseif player:hasSkill("longdan") then
-			return slashjink+(player:getHandcardNum()-shownum)/1.5
+			return slashjink+(player:getHandcardNum()-shownum)*0.72
 		elseif player:hasSkill("longhun") then
-			return clubcard + num + (player:getHandcardNum()-shownum)/3
+			return clubcard + num + (player:getHandcardNum()-shownum)*0.65
 		else 
-			return num+(player:getHandcardNum()-shownum)/3
+			return num+(player:getHandcardNum()-shownum)*0.6
 		end
 	elseif class_name == "Peach" then
 		if player:hasSkill("jijiu") then
-			return num + redpeach + (player:getHandcardNum()-shownum)/1.2
+			return num + redpeach + (player:getHandcardNum()-shownum)*0.6
 		elseif player:hasSkill("longhun") then
-			return num+heartpeach+(player:getHandcardNum()-shownum)/3
+			return num+heartpeach+(player:getHandcardNum()-shownum)*0.5
 		elseif player:hasSkill("chunlao") then			
 			return num + player:getPile("wine"):length()
 		else 
@@ -3249,7 +3249,7 @@ function getCardsNum(class_name, player)
 		end 
 	elseif class_name == "Analeptic" then
 		if player:hasSkill("jiuchi") then
-			return num+spadewine+(player:getHandcardNum()-shownum)/3
+			return num+spadewine+(player:getHandcardNum()-shownum)*0.3
 		elseif player:hasSkill("jiushi") then
 			return num+1
 		else
@@ -3257,7 +3257,7 @@ function getCardsNum(class_name, player)
 		end
 	elseif class_name == "Nullification" then
 		if player:hasSkill("kanpo") then
-			return num+blacknull+(player:getHandcardNum()-shownum)/2
+			return num+blacknull+(player:getHandcardNum()-shownum)*0.5
 		elseif player:hasSkill("yanzheng") then
 			return num+equipnull
 		else
