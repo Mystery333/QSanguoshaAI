@@ -95,8 +95,9 @@ function sgs.getDefenseSlash(player)
 	if player:getHp()<=2 then
 		defense = defense - 0.4
 	end
-
-	if (player:getSeat()-attacker:getSeat()) % (global_room:alivePlayerCount())>=3 and player:getHandcardNum()<=2 and player:getHp()<=2 then
+	
+	local playernum=global_room:alivePlayerCount()
+	if (player:getSeat()-attacker:getSeat()) % playernum >= playernum-2 and playernum>3 and player:getHandcardNum()<=2 and player:getHp()<=2 then
 		defense = defense - 0.4
 	end
 
@@ -1331,8 +1332,13 @@ function SmartAI:useCardIndulgence(card, use)
     table.sort(self.enemies, hp_subtract_handcard)
     
     local enemies = self:exclude(self.enemies, card)
+
+	local zhanghe = self.room:findPlayerBySkillName("qiaobian")
+	local zhanghe_seat = zhanghe and zhanghe:faceUp() and self:isEnemy(zhanghe) and zhanghe:getSeat() or 0
+
     for _, enemy in ipairs(enemies) do
-        if self:hasSkills("lijian|fanjian",enemy) and not enemy:containsTrick("indulgence") and not enemy:isKongcheng() and enemy:faceUp() and self:objectiveLevel(enemy) > 3 then
+        if self:hasSkills("lijian|fanjian|neo_fanjian",enemy) and not enemy:containsTrick("indulgence") and not self:hasSkills("qiaobian|keji|shensu", enemy) and not enemy:isKongcheng() and enemy:faceUp() and self:objectiveLevel(enemy) > 3 then
+			if zhanghe_seat and (enemy:getSeat() - zhanghe_seat) % self.room:alivePlayerCount() <= self.player:getSeat() then break	end
             use.card = card
             if use.to then use.to:append(enemy) end
             return
@@ -1340,10 +1346,11 @@ function SmartAI:useCardIndulgence(card, use)
     end
     
     for _, enemy in ipairs(enemies) do
-        if not enemy:containsTrick("indulgence") and not enemy:hasSkill("keji") and enemy:faceUp() and self:objectiveLevel(enemy) > 3 then
-            use.card = card
-            if use.to then use.to:append(enemy) end
-            return
+        if not enemy:containsTrick("indulgence") and not self:hasSkills("qiaobian|keji|shensu", enemy) and enemy:faceUp() and self:objectiveLevel(enemy) > 3 then
+			if zhanghe_seat and (enemy:getSeat() - zhanghe_seat) % self.room:alivePlayerCount() <= self.player:getSeat() then break	end
+			use.card = card
+			if use.to then use.to:append(enemy) end
+			return
         end
     end
 end
