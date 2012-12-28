@@ -1337,8 +1337,9 @@ function SmartAI:useCardIndulgence(card, use)
 	local zhanghe_seat = zhanghe and zhanghe:faceUp() and self:isEnemy(zhanghe) and zhanghe:getSeat() or 0
 
     for _, enemy in ipairs(enemies) do
-        if self:hasSkills("lijian|fanjian|neo_fanjian",enemy) and not enemy:containsTrick("indulgence") and not self:hasSkills("qiaobian|keji|shensu", enemy) and not enemy:isKongcheng() and enemy:faceUp() and self:objectiveLevel(enemy) > 3 then
-			if zhanghe_seat and (enemy:getSeat() - zhanghe_seat) % self.room:alivePlayerCount() <= self.player:getSeat() then break	end
+        if self:hasSkills("lijian|fanjian|neo_fanjian",enemy) and not enemy:containsTrick("indulgence") and not enemy:containsTrick("YanxiaoCard") 
+				and not self:hasSkills("qiaobian|keji|shensu", enemy) and not enemy:isKongcheng() and enemy:faceUp() and self:objectiveLevel(enemy) > 3 then
+			if zhanghe_seat>0 and (enemy:getSeat() - zhanghe_seat) % self.room:alivePlayerCount() <= self.player:getSeat() then break	end
             use.card = card
             if use.to then use.to:append(enemy) end
             return
@@ -1346,8 +1347,9 @@ function SmartAI:useCardIndulgence(card, use)
     end
     
     for _, enemy in ipairs(enemies) do
-        if not enemy:containsTrick("indulgence") and not self:hasSkills("qiaobian|keji|shensu", enemy) and enemy:faceUp() and self:objectiveLevel(enemy) > 3 then
-			if zhanghe_seat and (enemy:getSeat() - zhanghe_seat) % self.room:alivePlayerCount() <= self.player:getSeat() then break	end
+        if not enemy:containsTrick("indulgence") and not enemy:containsTrick("YanxiaoCard") and not self:hasSkills("qiaobian|keji|shensu", enemy) 
+				and enemy:faceUp() and self:objectiveLevel(enemy) > 3 then
+			if zhanghe_seat>0 and (enemy:getSeat() - zhanghe_seat) % self.room:alivePlayerCount() <= self.player:getSeat() then break	end
 			use.card = card
 			if use.to then use.to:append(enemy) end
 			return

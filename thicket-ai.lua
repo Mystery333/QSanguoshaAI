@@ -309,7 +309,7 @@ luanwu_skill.getTurnUseCard=function(self)
 			end
 		end
 
-		local has_slash = getCardsNum("Slash", player)>0 and true or false
+		local has_slash = getCardsNum("Slash", player)>0
 		local can_slash = false
 		if not can_slash then
 			for _, p in sgs.qlist(self.room:getOtherPlayers(player)) do

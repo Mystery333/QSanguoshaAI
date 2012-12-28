@@ -172,9 +172,9 @@ function SmartAI:useCardSupplyShortage(card, use)
 	local zhanghe_seat = zhanghe and zhanghe:faceUp() and self:isEnemy(zhanghe) and zhanghe:getSeat() or 0
 
 	for _, enemy in ipairs(enemies) do
-		if (self:hasSkills("yongsi|haoshi|tuxi", enemy) or (enemy:hasSkill("zaiqi") and enemy:getLostHp() > 1)) and
-			not enemy:containsTrick("supply_shortage") and enemy:faceUp() and self:objectiveLevel(enemy) > 3 and not self:hasSkills("qiaobian|shensu", enemy) then
-			if zhanghe_seat and (enemy:getSeat() - zhanghe_seat) % self.room:alivePlayerCount() <= self.player:getSeat() then break	end
+		if (self:hasSkills("yongsi|haoshi|tuxi", enemy) or (enemy:hasSkill("zaiqi") and enemy:getLostHp() > 1)) and not enemy:containsTrick("YanxiaoCard")
+				and	not enemy:containsTrick("supply_shortage") and enemy:faceUp() and self:objectiveLevel(enemy) > 3 and not self:hasSkills("qiaobian|shensu", enemy) then
+			if zhanghe_seat>0 and (enemy:getSeat() - zhanghe_seat) % self.room:alivePlayerCount() <= self.player:getSeat() then break	end
 			use.card = card
 			if use.to then use.to:append(enemy) end
 
@@ -182,8 +182,9 @@ function SmartAI:useCardSupplyShortage(card, use)
 		end
 	end
 	for _, enemy in ipairs(enemies) do
-		if ((#enemies == 1) or not self:hasSkills("tiandu|guidao|qiaobian|shensu",enemy)) and not enemy:containsTrick("supply_shortage") and enemy:faceUp() and self:objectiveLevel(enemy) > 3 then
-			if zhanghe_seat and (enemy:getSeat() - zhanghe_seat) % self.room:alivePlayerCount() <= self.player:getSeat() then break	end
+		if ((#enemies == 1) or not self:hasSkills("tiandu|guidao|qiaobian|shensu",enemy)) and not enemy:containsTrick("YanxiaoCard")
+				and not enemy:containsTrick("supply_shortage") and enemy:faceUp() and self:objectiveLevel(enemy) > 3 then
+			if zhanghe_seat>0 and (enemy:getSeat() - zhanghe_seat) % self.room:alivePlayerCount() <= self.player:getSeat() then break	end
 			use.card = card
 			if use.to then use.to:append(enemy) end
 
