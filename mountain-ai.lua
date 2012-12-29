@@ -614,7 +614,7 @@ end
 function sgs.ai_slash_prohibit.duanchang(self, to)
 	if self:isFriend(to) and self:isWeak(to) then return true end
 	if self:hasSkills("jueqing|qianxi") then return false end
-	return #self.enemies>1 and self:isWeak(to) and (self.player:isLord() or not self:isWeak())
+	return self.player:isLord() and self:isWeak()
 end
 
 sgs.ai_chaofeng.caiwenji = -5

@@ -98,7 +98,7 @@ function SmartAI:cantbeHurt(player)
 		if player:getHp() < 2 then
 			if self:isFriend(player) then
 				return true
-			elseif #self.enemies > 2 then
+			elseif self.player:isLord() and self:isWeak() then
 				return true
 			end
 		end
