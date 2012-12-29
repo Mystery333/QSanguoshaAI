@@ -2933,7 +2933,9 @@ function SmartAI:damageIsEffective(player, nature, source)
 	if player:hasSkill("shenjun") and player:getGender() ~= source:getGender() and nature ~= sgs.DamageStruct_Thunder then
 		return false
 	end
-
+	if player:getMark("@fenyong") > 0 and player:hasSkill("fenyong")  then
+		return false
+	end
 	if player:getMark("@fog") > 0 and nature ~= sgs.DamageStruct_Thunder then
 		return false
 	end
@@ -3497,6 +3499,10 @@ function SmartAI:aoeIsEffective(card, to)
 		return false
 	end
 
+	if to:getMark("@fenyong") >0 and to:hasSkill("fenyong") then
+		return false
+	end
+
 	if to:hasSkill("wuyan") then
 		return false
 	end
@@ -3715,6 +3721,11 @@ function SmartAI:hasTrickEffective(card, player)
 		if player:hasSkill("wuyan") then
 			if card and (card:isKindOf("Duel") or card:isKindOf("FireAttack")) then return false end
 		end
+
+		if player:getMark("@fenyong") >0 and player:hasSkill("fenyong") then
+			if card and (card:isKindOf("Duel") or card:isKindOf("FireAttack")) then return false end
+		end
+
 		if (player:getMark("@fog") > 0 or (player:hasSkill("shenjun") and self.player:getGender() ~= player:getGender())) and
 			sgs.dynamic_value.damage_card[card:getClassName()] then return false end
 		if player:hasSkill("zuixiang") and player:isLocked(card) then return false end

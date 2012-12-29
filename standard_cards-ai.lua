@@ -801,6 +801,7 @@ sgs.ai_skill_cardask.aoe = function(self, data, pattern, target, name)
     local aoe = sgs.Sanguosha:cloneCard(name, sgs.Card_NoSuit, 0)
     local menghuo = self.room:findPlayerBySkillName("huoshou")
     if self.player:hasSkill("wuyan") then return "." end
+	if self.player:getMark("@fenyong") >0 and self.player:hasSkill("fenyong") then return "." end
     if target:hasSkill("wuyan") and not (menghuo and aoe:isKindOf("SavageAssault")) then return "." end
     if self.player:hasSkill("jianxiong") and self:getAoeValue(aoe) > -10 and
         (self.player:getHp()>1 or self:getAllPeachNum()>0) and not self.player:containsTrick("indulgence") then return "." end
@@ -962,6 +963,7 @@ sgs.dynamic_value.damage_card.Duel = true
 sgs.ai_skill_cardask["duel-slash"] = function(self, data, pattern, target)
     if sgs.ai_skill_cardask.nullfilter(self, data, pattern, target) then return "." end
     if target:hasSkill("wuyan") then return "." end
+	if self.player:getMark("@fenyong") >0 and self.player:hasSkill("fenyong") then return "." end
     if self:isFriend(target) and target:hasSkill("rende") and self.player:hasSkill("jieming") then return "." end
     if (not self:isFriend(target) and self:getCardsNum("Slash")*2 >= target:getHandcardNum())
         or (target:getHp() > 2 and self.player:getHp() <= 1 and self:getCardsNum("Peach") == 0 and not self.player:hasSkill("buqu")) then

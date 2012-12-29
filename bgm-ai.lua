@@ -725,6 +725,11 @@ sgs.ai_skill_invoke.fenyong = function(self, data)
 	return true
 end
 
+function sgs.ai_slash_prohibit.fenyong(self, to)
+	return to:getMark("@fenyong") >0 and to:hasSkill("fenyong")
+end
+
+
 sgs.ai_skill_choice.xuehen = function(self, choices)
 	local current = self.room:getCurrent();
 	self:sort(self.enemies, "defense")
