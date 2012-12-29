@@ -203,7 +203,7 @@ function SmartAI:slashIsAvailable(player)
     assert(slash)
     return slash:isAvailable(player)
 end
-
+--[[ π”√…±]]--
 function SmartAI:useCardSlash(card, use)
     if not self:slashIsAvailable() then return end
     local basicnum = 0
