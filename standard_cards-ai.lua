@@ -203,6 +203,147 @@ function SmartAI:slashIsAvailable(player)
     assert(slash)
     return slash:isAvailable(player)
 end
+--[[
+	自定义函数：对待选目标进行杀的伤害空间排序
+	参数：targets（参与排序的待选目标表）、slash（使用的杀，默认为无色无属性的杀）
+]]--
+function SmartAI:sortByDamageSpace(targets, slash)
+	if #targets == 0 then --没有待选目标则返回
+		return nil
+	end
+	if not slash then --默认为无色无属性杀
+		slash = sgs.Sanguosha:cloneCard("slash", sgs.Card_NoSuit, 0)
+	end
+	local source = self.player --杀的来源：自己
+	self:sort(targets, "defenseSlash") --按防御杀的能力对表内目标排序
+	local effects = {} --结果记录
+	for index=1, #targets, 1 do --结果记录初始化
+		local value = 30 - index*4
+		table.insert(effects, value)
+	end
+	--火杀藤甲的特殊影响部分--
+	local nature = sgs.DamageStruct_Normal --杀的属性，默认为无属性
+	if slash:isKindOf("FireSlash") then --火属性的杀
+		nature = sgs.DamageStruct_Fire
+	elseif slash:isKindOf("ThunderSlash") then --雷属性的杀
+		nature = sgs.DamageStruct_Thunder
+	end
+	local canBeFireSlash = false --纵火的能力
+	local weapon = source:getWeapon() --自己的武器
+	if weapon and weapon:isKindOf("Fan") then --如果装备了朱雀羽扇
+		canBeFireSlash = canBeFireSlash or (nature ~= sgs.DamageStruct_Thunder)
+	end
+	if source:hasSkill("lihuo") then --如果有技能疠火
+		canBeFireSlash = canBeFireSlash or (nature ~= sgs.DamageStruct_Thunder)
+	end
+	if source:hasSkill("zonghuo") then --如果有技能纵火
+		canBeFireSlash = true
+	end
+	if canBeFireSlash then --如果有纵火的能力
+		slash = sgs.Sanguosha:cloneCard("fire_slash", slash:getSuit(), slash:getNumber()) --杀的火焰化
+		nature = sgs.DamageStruct_Fire --更新杀的属性
+	end
+	if nature == sgs.DamageStruct_Fire then --如果使用的是火杀
+		for index=1, #targets, 1 do 
+			local enemy = targets[index] --当前判断目标
+			local value = 0
+			if self:slashProhibit(slash, enemy) then --如果禁止使用火杀
+				value = -99
+			else 
+				local armor = enemy:getArmor() 
+				if armor then
+					if armor:isKindOf("Vine") or armor:isKindOf("GaleShell") then --如果目标装备了藤甲或狂风甲
+						value = value + 10
+					end
+				end
+				if enemy:getMark("@gale") > 0 then --如果目标有狂风标记
+					value = value + 4
+				end
+			end
+			effects[index] = effects[index] + value --更新结果记录
+		end
+	end
+	--免杀神关羽的特殊影响部分--
+	for index=1, #targets, 1 do
+		local enemy = targets[index] --当前判断目标
+		local value = 0
+		if enemy:hasSkill("wuhun") then --如果目标有技能武魂
+			if source:isLord() or enemy:getHp() <= 2 then --如果自己是主公或者目标体力值较低
+				value = value -40
+			end
+		end
+		if enemy:hasSkill("huilei") and (enemy:getHp() == 1) then --如果目标有技能挥泪且体力为1点
+			if source:getHandcardNum() >= 4 then --如果自己手牌比较多
+				value = value -25
+			elseif sgs.compareRoleEvaluation(enemy, "rebel", "loyalist") == "rebel" then --如果目标像反贼
+				value = value + 5
+			end
+			if source:hasSkill("kongcheng") then --如果自己有技能空城
+				value = value + 3
+			end
+			if self:hasSkills(sgs.lose_equip_skill) then --如果自己有技能枭姬、旋风
+				value = value + 6
+			end
+		end
+		if enemy:hasSkill("duanchang") and (enemy:getHp() == 1) then --如果目标有技能断肠且体力为1点
+			if source:hasSkill("shiyong") then --如果自己有技能恃勇
+				value = value + 15
+			elseif source:hasSkill("benghuai") then --如果自己有技能崩坏
+				value = value + 5
+			elseif source:hasSkill("wumou") then --如果自己有技能无谋
+				value = value + 2
+			else
+				value = value - 30
+			end
+		end
+		effects[index] = effects[index] + value --更新结果记录
+	end
+	--伤害模拟--
+	for index=1, #targets, 1 do
+		local enemy = targets[index]
+		local count = 0
+		if nature == sgs.DamageStruct_Fire then
+			count = self:DamageCount(source, enemy, slash, "fire", enemy:isChained())
+		elseif nature == sgs.DamageStruct_Thunder then
+			count = self:DamageCount(source, enemy, slash, "thunder", enemy:isChained())
+		elseif nature == sgs.DamageStruct_Normal then
+			count = self:DamageCount(source, enemy, slash, "normal", false)
+		end
+		effects[index] = effects[index] + 3*count
+	end
+	--结果产生部分--
+	local results = {}
+	while (#targets > 0) do
+		local prior = nil
+		local pos = -1
+		local maxvalue = -999
+		for index=1, #targets, 1 do
+			if effects[index] > maxvalue then
+				pos = index
+				maxvalue = effects[index]
+				prior = targets[index]
+			end
+		end
+		if prior then
+			table.insert(results, prior)
+			table.remove(targets, pos)
+			table.remove(effects, pos)
+		else
+			break
+		end
+	end
+	return results
+end
+--[[
+	自定义函数：获取首要出杀目标
+	参数：targets（待选目标表）、slash（所用的杀，默认为无色无属性杀）
+]]--
+function SmartAI:getPriorSlashTarget(targets, slash)
+	local results = self:sortByDamageSpace(targets, slash)
+	if #results > 0 then
+		return results[1]
+	end
+end
 --[[使用杀]]--
 function SmartAI:useCardSlash(card, use)
     if not self:slashIsAvailable() then return end
@@ -216,8 +357,12 @@ function SmartAI:useCardSlash(card, use)
     self.slash_targets = 1
     if card:getSkillName() == "wushen" then no_distance = true end
     if card:getSkillName() == "gongqi" then no_distance = true end
-    if self.player:hasFlag("tianyi_success") then self.slash_targets = self.slash_targets + 1 end
-    if self.player:hasSkill("lihuo") and card:isKindOf("FireSlash") then self.slash_targets = self.slash_targets + 1 end
+    if self.player:hasFlag("tianyi_success") then 
+		self.slash_targets = self.slash_targets + 1 
+	end
+    if self.player:hasSkill("lihuo") and card:isKindOf("FireSlash") then 
+		self.slash_targets = self.slash_targets + 1 
+	end
     if (self.player:getHandcardNum() == 1
     and self.player:getHandcards():first():isKindOf("Slash")
     and self.player:getWeapon()
@@ -260,12 +405,14 @@ function SmartAI:useCardSlash(card, use)
     for _, enemy in ipairs(self.enemies) do
         if not self:slashProhibit(card,enemy) then table.insert(targets, enemy) end
     end
-    
+	
+	targets = self:sortByDamageSpace(targets, card) --按杀的伤害空间排序
+	
     for _, target in ipairs(targets) do
         local canliuli = false
         for _, friend in ipairs(self.friends_noself) do
-			--[[注：在这一行报错：target不能被求长度]]--
-            if self:canLiuli(target, friend) and self:slashIsEffective(card, friend) and #target > 1 and friend:getHp() < 3 then canliuli = true end
+			--[[注：在这一行报错：target不能被求长度，把#target > 1改成target了。]]--
+            if self:canLiuli(target, friend) and self:slashIsEffective(card, friend) and target and friend:getHp() < 3 then canliuli = true end
         end
         if (self.player:canSlash(target, card, not no_distance) or
         (use.isDummy and self.predictedRange and (self.player:distanceTo(target) <= self.predictedRange))) and

@@ -754,7 +754,7 @@ function SmartAI:DamageCount(source, victim, card, damage_type, chained)
 		damage_type = "normal"
 	end
 	local count = 0
-	--确定伤害属性
+	--确定伤害属性等信息
 	local isDamage = false
 	local nature = nil
 	if damage_type == "normal" then
@@ -774,7 +774,7 @@ function SmartAI:DamageCount(source, victim, card, damage_type, chained)
 			isDamage = false
 			nature = sgs.DamageStruct_Normal
 		end
-		if self:isFriend(victim, source) then --如果是己方.lua_ai
+		if isDamage and self:isFriend(victim, source) then --如果是己方
 			factor = -1
 		end
 	end
@@ -3234,7 +3234,7 @@ function SmartAI:damageIsEffective(player, nature, source)
 	end                                                                                                                  --ecup
 	
 	if player:hasSkill("fenyong") and player:getMark("@fenyong") > 0 then
-		return false--对已愤勇的☆SP夏侯惇伤害无效
+		return false --对已愤勇的☆SP夏侯惇伤害无效
 	end
 	
 	return true
