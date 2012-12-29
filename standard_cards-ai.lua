@@ -264,6 +264,7 @@ function SmartAI:useCardSlash(card, use)
     for _, target in ipairs(targets) do
         local canliuli = false
         for _, friend in ipairs(self.friends_noself) do
+			--[[注：在这一行报错：target不能被求长度]]--
             if self:canLiuli(target, friend) and self:slashIsEffective(card, friend) and #target > 1 and friend:getHp() < 3 then canliuli = true end
         end
         if (self.player:canSlash(target, card, not no_distance) or
@@ -878,7 +879,7 @@ function SmartAI:useCardDuel(duel, use)
             return
         end
     end
-    local ptarget = self:getPriorTarget()
+    local ptarget = self:getPriorTarget() --☆--
     if ptarget then
         local target = ptarget
         local n2 = getCardsNum("Slash",target)

@@ -667,7 +667,172 @@ function SmartAI:sortByCardNeed(cards)
 
 	table.sort(cards, compare_func)
 end
---[[获取对杀的首要目标]]--
+--[[下面两个模拟函数，仅设计，不参与实际计算]]--
+--[[
+	自定义函数：模拟单次伤害效果
+	参数：source（伤害来源）、victim（伤害目标）、card（伤害卡牌）、nature（伤害属性，按DamageStruct规定表示）
+	备注：没有考虑白银狮子的影响，在引用函数中自行处理。
+]]--
+function SmartAI:AtomDamageCount(source, victim, card, nature)
+	if not victim then --没有伤害目标则返回0
+		return 0
+	end
+	if not self:damageIsEffective(victim, nature, source) then --如果伤害无效则返回0
+		return 0 --（包括了对神君、大雾、水泳、愤勇的判断）
+	end
+	local isSlash = false --卡牌是否为杀的标志
+	local isNDTrick = false --卡牌是否为非延时性锦囊的标志
+	if card then
+		isSlash = card:isKindOf("Slash") 
+		isNDTrick = card:isNDTrick()
+	end
+	if victim:hasSkill("zhichi") then --如果目标有技能智迟
+		local tag = self.room:getTag("Zhichi")
+		if tag:toString() == victim:objectName() then --如果目标智迟中
+			if isSlash or isNDTrick then --如果卡牌为杀或非延时性锦囊
+				return 0
+			end
+		end
+	end
+	if victim:hasSkill("wuyan") or victim:hasSkill("noswuyan") then --如果目标有技能无言
+		if isNDTrick then --如果卡牌为非延时性锦囊
+			return 0
+		end
+	end
+	local damage = 1 --默认为一点伤害
+	if nature == sgs.DamageStruct_Fire then --如果是火焰伤害
+		local armor = victim:getArmor()
+		if armor then 
+			if armor:isKindOf("Vine") or armor:isKindOf("GaleShell") then --如果目标装备了藤甲或狂风甲
+				damage = damage + 1
+			end
+		end
+		if victim:getMark("@gale") then --如果目标有狂风标记
+			damage = damage + 1
+		end
+	end
+	if source then --如果有伤害来源
+		local weapon = source:getWeapon()
+		if weapon then
+			if weapon:isKindOf("GudingBlade") then --如果来源有古锭刀
+				if isSlash and victim:isKongcheng() then --如果卡牌为杀且目标空城
+					damage = damage + 1
+				end
+			end
+		end
+		if source:hasFlag("luoyi") then --如果来源有裸衣标志
+			if isSlash or card:isKindOf("Duel") then --如果卡牌为杀或决斗
+				damage = damage + 1
+			end
+		end
+		if isSlash then --如果卡牌为杀
+			if card:hasFlag("drank") then --如果卡牌为酒杀
+				damage = damage + 1
+			end
+			if source:hasSkill("jie") then --如果来源有技能疾恶
+				if card:isRed() then --如果是红杀
+					damage = damage + 1
+				end
+			end
+		end
+	end
+	return damage
+end
+--[[
+	自定义函数：模拟伤害效果（仅考虑等效伤害点数，也就是对敌方伤害点数与对己方伤害点数的差值）
+	参数：source（伤害来源，nil为无来源伤害）
+		victim（伤害目标，必须有）
+		card（伤害所用卡牌，nil为无卡牌伤害，如强袭等技能伤害）
+		damage_type（伤害类型："normal"为普通伤害，"fire"为火焰伤害，"thunder"为雷电伤害，"losehp"为体力流失， "recover"为体力回复）
+		chained（伤害目标是否被铁索连环，true表示被连环，false表示没有连环）
+]]--
+function SmartAI:DamageCount(source, victim, card, damage_type, chained)
+	if not victim then --没有伤害目标则返回0
+		return 0
+	end
+	if not damage_type then --默认为普通伤害
+		damage_type = "normal"
+	end
+	local count = 0
+	--确定伤害属性
+	local isDamage = false
+	local nature = nil
+	if damage_type == "normal" then
+		isDamage = true
+		nature = sgs.DamageStruct_Normal
+	elseif damage_type == "fire" then
+		isDamage = true
+		nature = sgs.DamageStruct_Fire
+	elseif damage_type == "thunder" then
+		isDamage = true
+		nature = sgs.DamageStruct_Thunder
+	end
+	local factor = 1 --敌对系数
+	if source then
+		if isDamage and source:hasSkill("jueqing") then --如果来源有技能绝情
+			damage_type = "losehp"
+			isDamage = false
+			nature = sgs.DamageStruct_Normal
+		end
+		if self:isFriend(victim, source) then --如果是己方.lua_ai
+			factor = -1
+		end
+	end
+	--伤害部分计算--
+	if isDamage then 
+		local shrink = false --伤害缩水标志
+		local armor = victim:getArmor()
+		if armor and armor:isKindOf("SilverLion") then --如果目标装备了白银狮子
+			shrink = true
+		end
+		if nature == sgs.Damage_Normal then --如果是普通伤害
+			count = self:AtomDamageCount(source, victim, card, nature)
+			if shrink and count > 1 then
+				count = 1
+			end
+			count = count * factor
+		else --如果是属性伤害
+			count = self:AtomDamageCount(source, victim, card, nature)
+			if shrink and count > 1 then
+				count = 1
+			end
+			count = count * factor
+			if chained then --如果目标被铁索连环
+				local targets = self.room:getOtherPlayers(victim)
+				for _,target in sgs.qlist(targets) do
+					if target:isChained() and target:isAlive() then
+						count = count + self:DamageCount(source, target, card, damage_type, false)
+					end
+				end
+			end
+		end
+	end
+	--体力流失部分计算--
+	if damage_type == "losehp" then 
+		count = self:AtomDamageCount(source, victim, card, nature)
+	end
+	--体力回复部分计算--
+	if damage_type == "recover" then 
+		if victim:hasLordSkill("jiuyuan") then --如果目标有主公技救援
+			if source:getKingdom() == "wu" then --如果来源为吴势力
+				if card and card:isKindOf("Peach") then --如果卡牌为桃
+					count = count + 1
+				end
+			end
+		end
+		local jxd = self.room:findPlayerBySkillName("wuling", false)
+		if jxd and jxd:getMark("water") > 0 then --如果当前是“五灵·水”场景
+			if card and card:isKindOf("Peach") then --如果卡牌为桃
+				count = count + 1
+			end
+		end
+	end
+	return count
+end
+--[[
+	获取的首要目标（完全不对啊！只有SmartAI:useCardDuel(duel, use)用到了这个函数！目前只是针对决斗的！）
+]]--
+--[[
 function SmartAI:getPriorTarget()
 	if #self.enemies == 0 then return end --如果没有敌人则返回
 	--结果记录准备部分--
@@ -757,6 +922,27 @@ function SmartAI:getPriorTarget()
 		end
 		special_effects[index] = special_effects[index] + value --更新结果记录
 	end
+	--伤害模拟测试区域--
+	for index=1, #self.enemies, 1 do
+		local enemy = self.enemies[index]
+		local count = 0
+		if fireSlashCount > 0 then
+			local fire_slash = sgs.Sanguosha:cloneCard("fire_slash", sgs.Card_Heart, 0)
+			count = self:DamageCount(source, enemy, fire_slash, "fire", enemy:isChained())
+		elseif thunderSlashCount > 0 then
+			local thunder_slash = sgs.Sanguosha:cloneCard("thunder_slash", sgs.Card_Spade, 0)
+			count = self:DamageCount(source, enemy, thunder_slash, "thunder", enemy:isChained())
+		else
+			local slash = sgs.Sanguosha:cloneCard("slash", sgs.Card_NoSuit, 0)
+			count = self:DamageCount(source, enemy, slash, "normal", false)
+		end
+		special_effects[index] = special_effects[index] + 3*count
+		--For Console:
+		--local name = self.enemies[index]:getGeneralName()
+		--local pt = count
+		--self.room:writeToConsole(string.format("(%d) player:%s special_effects:%d", index, name, pt))
+		--
+	end
 	--结果产生部分--
 	local maxvalue = -999
 	local target = nil
@@ -765,13 +951,20 @@ function SmartAI:getPriorTarget()
 			maxvalue = special_effects[index]
 			target = self.enemies[index]
 		end
-		--[[For Console:
-		local name = self.enemies[index]:getGeneralName()
-		local pt = special_effects[index]
-		self.room:writeToConsole(string.format("(%d) player:%s special_effects:%d", index, name, pt))
-		]]--
+		--For Console:
+		--local name = self.enemies[index]:getGeneralName()
+		--local pt = special_effects[index]
+		--self.room:writeToConsole(string.format("(%d) player:%s special_effects:%d", index, name, pt))
+		--
 	end
 	return target
+end
+]]--
+--恢复原貌--
+function SmartAI:getPriorTarget()
+	if #self.enemies == 0 then return end 
+	self:sort(self.enemies, "defense")
+	return self.enemies[1]
 end
 
 function sgs.evaluatePlayerRole(player)
@@ -1482,6 +1675,7 @@ function SmartAI:updateAlivePlayerRoles()
 		sgs.current_mode_players[arole] = 0
 	end
 	for _, aplayer in sgs.qlist(self.room:getOtherPlayers(self.room:getLord())) do
+		--[[小场景报错：attempt to perform arithmetic on field '?' (a nil value)]]--
 		sgs.current_mode_players[aplayer:getRole()] = sgs.current_mode_players[aplayer:getRole()] + 1
 	end
 	
