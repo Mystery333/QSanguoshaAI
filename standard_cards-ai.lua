@@ -312,27 +312,26 @@ function SmartAI:sortByDamageSpace(targets, slash)
 		effects[index] = effects[index] + 3*count
 	end
 	--结果产生部分--
-	local results = {}
-	while (#targets > 0) do
-		local prior = nil
+	local flag = true
+	while flag do
 		local pos = -1
-		local maxvalue = -999
-		for index=1, #targets, 1 do
-			if effects[index] > maxvalue then
+		for index=1, #targets-1, 1 do
+			if effects[index] < effects[index+1] then
 				pos = index
-				maxvalue = effects[index]
-				prior = targets[index]
 			end
 		end
-		if prior then
-			table.insert(results, prior)
-			table.remove(targets, pos)
+		if pos > 0 then --逆序交换
+			local effect = effects[pos]
 			table.remove(effects, pos)
+			table.insert(effects, pos+1, effect)
+			local target = targets[pos]
+			table.remove(targets, pos)
+			table.insert(targets, pos+1, target)
 		else
-			break
+			flag = false
 		end
 	end
-	return results
+	return targets
 end
 --[[
 	自定义函数：获取首要出杀目标
@@ -406,27 +405,27 @@ function SmartAI:useCardSlash(card, use)
         if not self:slashProhibit(card,enemy) then table.insert(targets, enemy) end
     end
 	
-	targets = self:sortByDamageSpace(targets, card) --按杀的伤害空间排序
+	local results = self:sortByDamageSpace(targets, card) --按杀的伤害空间排序
 	
-    for _, target in ipairs(targets) do
+    for _, target in ipairs(results) do
         local canliuli = false
         for _, friend in ipairs(self.friends_noself) do
 			--[[注：在这一行报错：target不能被求长度，把#target > 1改成target了。]]--
             if self:canLiuli(target, friend) and self:slashIsEffective(card, friend) and target and friend:getHp() < 3 then canliuli = true end
         end
-        if (self.player:canSlash(target, card, not no_distance) or
+        if (self.player:canSlash(target, card, not no_distance) or --能杀这个目标
         (use.isDummy and self.predictedRange and (self.player:distanceTo(target) <= self.predictedRange))) and
-        self:objectiveLevel(target) > 3
-        and self:slashIsEffective(card, target) and
-        not (target:hasSkill("xiangle") and basicnum < 2) and not canliuli and
+        self:objectiveLevel(target) > 3 --或者目标在预测范围之内？
+        and self:slashIsEffective(card, target) and --且杀是有效的
+        not (target:hasSkill("xiangle") and basicnum < 2) and not canliuli and --且目标的享乐和流离不影响
         not (not self:isWeak(target) and #self.enemies > 1 and #self.friends > 1 and self.player:hasSkill("keji")
-            and self:getOverflow() > 0 and not self:isEquip("Crossbow")) then
+            and self:getOverflow() > 0 and not self:isEquip("Crossbow")) then --且自己需要克己……
             -- fill the card use struct
             local usecard = card
             if not use.to or use.to:isEmpty() then
-                local anal = self:searchForAnaleptic(use,target,card)
-                if anal and not self:isEquip("SilverLion", target) and not self:isWeak() then
-                    if anal:getEffectiveId() ~= card:getEffectiveId() then use.card = anal return end
+                local anal = self:searchForAnaleptic(use,target,card) --寻找可用的酒？
+                if anal and not self:isEquip("SilverLion", target) and not self:isWeak() then --如果有可用的酒
+                    if anal:getEffectiveId() ~= card:getEffectiveId() then use.card = anal return end --使用酒？
                 end
                 local equips = self:getCards("EquipCard", self.player, "h")
                 for _, equip in ipairs(equips) do

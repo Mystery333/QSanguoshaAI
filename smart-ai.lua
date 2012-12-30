@@ -699,6 +699,11 @@ function SmartAI:AtomDamageCount(source, victim, card, nature)
 			return 0
 		end
 	end
+	if victim:hasSkill("huoshou") or victim:hasSkill("juxiang") then --如果目标有技能祸首、巨象
+		if isNDTrick and card:isKindOf("SavageAssault") then --如果卡牌为南蛮入侵
+			return 0
+		end
+	end
 	local damage = 1 --默认为一点伤害
 	if nature == sgs.DamageStruct_Fire then --如果是火焰伤害
 		local armor = victim:getArmor()
@@ -773,6 +778,14 @@ function SmartAI:DamageCount(source, victim, card, damage_type, chained)
 			damage_type = "losehp"
 			isDamage = false
 			nature = sgs.DamageStruct_Normal
+		end
+		if isDamage and victim:hasLordSkill("shichou") then --如果目标有技能誓仇
+			if victim.tag then --这个总是nil，始终无效。
+				local tag = victim.tag:value("ShichouTarget")
+				if tag then
+					victim = tag:toPlayer()
+				end
+			end
 		end
 		if isDamage and self:isFriend(victim, source) then --如果是己方
 			factor = -1
