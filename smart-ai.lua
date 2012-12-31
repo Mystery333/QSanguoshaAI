@@ -1325,7 +1325,7 @@ function SmartAI:getFriendsNoself(player)
 	elseif self:isEnemy(self.player, player) then
 		friends = sgs.QList2Table(self.lua_ai:getEnemies())
 		for i = #friends, 1, -1 do
-			if friends[i]:objectName() == player:objectName() then
+			if friends[i]:objectName() == player:objectName() or friends[i]:isDead() then
 				table.remove(friends, i)
 			end
 		end
@@ -1413,9 +1413,19 @@ function SmartAI:updatePlayers()
 	sgs.draw_pile = global_room:getDrawPile()
 	
 	if sgs.isRolePredictable() then
-		self.friends = sgs.QList2Table(self.lua_ai:getFriends())
+		local friends= sgs.QList2Table(self.lua_ai:getFriends())		
+		for i=1, #friends,1 do
+			if friends[i]:isDead() then table.remove(friends, i) end
+		end
+
+		local enemies= sgs.QList2Table(self.lua_ai:getEnemies())
+		for i=1, #enemies,1 do
+			if enemies[i]:isDead() then table.remove(enemies, i) end
+		end
+
+		self.friends = friends
 		table.insert(self.friends, self.player)
-		self.friends_noself = sgs.QList2Table(self.lua_ai:getFriends())
+		self.friends_noself = friends
 		self.enemies = sgs.QList2Table(self.lua_ai:getEnemies())
 		
 		self.retain = 2
@@ -1445,6 +1455,10 @@ function SmartAI:updatePlayers()
 
 	local players = self.room:getOtherPlayers(self.player)
 	players = sgs.QList2Table(players)
+
+	for i=1, #players,1 do
+		if players[i]:isDead() then table.remove(players, i) end
+	end
 
 	for _,player in ipairs(players) do
 		if #players == 1 then break end
@@ -1813,6 +1827,7 @@ function SmartAI:askForDiscard(reason, discard_num, min_num, optional, include_e
 end
 
 function SmartAI:askForNullification(trick, from, to, positive)
+	if self.player:isDead() then return nil end
 	local cards = self.player:getCards("he")
 	cards = sgs.QList2Table(cards)
 	self:sortByUseValue(cards, true)
@@ -2097,6 +2112,7 @@ function SmartAI:askForCardChosen(who, flags, reason)
 end
 
 function sgs.ai_skill_cardask.nullfilter(self, data, pattern, target)
+	if self.player:isDead() then return "." end
 	if not self:damageIsEffective(nil, nil, target) then return "." end
 	if self:getDamagedEffects(self) then return "." end
 	if target and target:getWeapon() and target:getWeapon():isKindOf("IceSword") and self.player:getCards("he"):length() > 2 then return end
@@ -2649,6 +2665,7 @@ end
 function SmartAI:askForSinglePeach(dying)
 	local card_str
 	local forbid = sgs.Sanguosha:cloneCard("peach", sgs.Card_NoSuit, 0)
+	if self.player:isDead() then return "." end
 	if self.player:isLocked(forbid) or dying:isLocked(forbid) then return "." end
 	if self:isFriend(dying) then
 		if self:needDeath(dying) then return "." end
