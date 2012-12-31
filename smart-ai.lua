@@ -2127,7 +2127,7 @@ function sgs.ai_skill_cardask.nullfilter(self, data, pattern, target)
 		if willTianxiang ~= "." then return "." end
 	elseif self.player:hasSkill("longhun") and self.player:getHp() > 1 then
 		return "."
-	end	
+	end
 	if target and target:hasSkill("guagu") and self.player:isLord() then return "." end
 	local sunshangxiang = self.room:findPlayerBySkillName("jieyin")
 	if sunshangxiang and sunshangxiang:isWounded() and self:isFriend(sunshangxiang) and not self.player:isWounded() 
@@ -2964,6 +2964,10 @@ end
 
 function SmartAI:getDamagedEffects(player, damage_from)
 	local attacker = damage_from and damage_from or self.room:getCurrent()
+
+	if not self:hasSkills("jueqing", attacker) and player:hasLordSkill("shichou") then
+		return sgs.ai_need_damaged.shichou(self,attacker) == 1
+	end
 	
 	if sgs.isGoodHp(player) and not self:hasSkills("qianxi|jueqing", attacker) and not attacker:hasFlag("drank") and not attacker:hasFlag("luoyi") then		
 		for _, askill in sgs.qlist(player:getTriggerSkills()) do		

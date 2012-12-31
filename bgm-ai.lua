@@ -446,6 +446,26 @@ sgs.ai_skill_playerchosen.shichou = function(self, targets)
 	return targets[1]
 end
 
+
+sgs.ai_need_damaged.shichou = function (self, attacker)
+	local player=self.player
+	if player:hasLordSkill("shichou") and player:getMark("@hate")==0 then
+		if player:getTag("ShichouTarget") then
+			local victim = player:getTag("ShichouTarget"):toPlayer()
+			local role
+	        if sgs.isRolePredictable() and sgs.evaluatePlayerRole(player) == "rebel" then 
+				role="rebel" 
+			elseif if sgs.compareRoleEvaluation(player, "rebel", "loyalist") == "rebel" then 
+				role="rebel"
+			end
+			if victim:isAlive() and role=="rebel" then
+				return victim:hasSkill("wuhun") and 2 or 1
+			end			
+		end
+	end
+	return false
+end
+
 sgs.ai_skill_discard.shichou = sgs.ai_skill_discard.lihun
 
 function SmartAI:useCardYanxiaoCard(card, use)
