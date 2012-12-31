@@ -759,7 +759,7 @@ function sgs.ai_armor_value.EightDiagram(player, self)
 end
 
 function sgs.ai_armor_value.RenwangShield()
-    return 4
+    return 4.5
 end
 
 function sgs.ai_armor_value.SilverLion(player, self)
@@ -784,8 +784,8 @@ sgs.ai_use_priority.Axe = 2.64
 sgs.ai_use_priority.CrossBow = 2.63
 sgs.ai_use_priority.SilverLion = 0.9
 sgs.ai_use_priority.EightDiagram = 0.8
-sgs.ai_use_priority.RenwangShield = 0.7
-sgs.ai_use_priority.DefensiveHorse = 0
+sgs.ai_use_priority.RenwangShield = 0.85
+sgs.ai_use_priority.DefensiveHorse = 2.75
 
 sgs.dynamic_value.damage_card.ArcheryAttack = true
 sgs.dynamic_value.damage_card.SavageAssault = true
@@ -962,7 +962,7 @@ sgs.dynamic_value.damage_card.Duel = true
 
 sgs.ai_skill_cardask["duel-slash"] = function(self, data, pattern, target)
     if sgs.ai_skill_cardask.nullfilter(self, data, pattern, target) then return "." end
-    if target:hasSkill("wuyan") then return "." end
+    if target:hasSkill("wuyan") or self.player:hasSkill("wuyan") then return "." end
 	if self.player:getMark("@fenyong") >0 and self.player:hasSkill("fenyong") then return "." end
     if self:isFriend(target) and target:hasSkill("rende") and self.player:hasSkill("jieming") then return "." end
     if (not self:isFriend(target) and self:getCardsNum("Slash")*2 >= target:getHandcardNum())
