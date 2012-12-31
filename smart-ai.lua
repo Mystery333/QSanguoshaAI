@@ -2970,7 +2970,7 @@ function SmartAI:getDamagedEffects(player, damage_from)
 	end
 	
 	if sgs.isGoodHp(player) and not self:hasSkills("qianxi|jueqing", attacker) and not attacker:hasFlag("drank") and not attacker:hasFlag("luoyi") then		
-		for _, askill in sgs.qlist(player:getTriggerSkills()) do		
+		for _, askill in sgs.qlist(player:getVisibleSkillList()) do		
 			local callback = sgs.ai_need_damaged[askill]
 			if type(callback) == "function" and callback(self, attacker) then return true end
 		end

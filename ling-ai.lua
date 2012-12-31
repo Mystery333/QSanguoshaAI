@@ -141,7 +141,7 @@ sgs.ai_skill_invoke.neoganglie = function(self, data)
 end
 
 sgs.ai_need_damaged.neoganglie = function (self, attacker)
-	if self:getDamagedEffects(attacker,self.player) return self:isFriend(attacker) end
+	if self:getDamagedEffects(attacker,self.player) then return self:isFriend(attacker) end
 
 	if self:isEnemy(attacker) and attacker:getHp() <= 2 and not attacker:hasSkill("buqu") and sgs.isGoodTarget(attacker) then
 		return true

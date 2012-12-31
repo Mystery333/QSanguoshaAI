@@ -45,7 +45,7 @@ end
 
 sgs.ai_skill_invoke.fankui = function(self, data)
     local target = data:toPlayer()
-	if sgs.ai_need_damaged.fankui(self, target) then return true
+	if sgs.ai_need_damaged.fankui(self, target) then return true end
 
     if self:isFriend(target) then
         return (target:hasSkill("xiaoji") and not target:getEquips():isEmpty()) or (self:isEquip("SilverLion",target) and target:isWounded())
@@ -61,6 +61,7 @@ sgs.ai_skill_invoke.fankui = function(self, data)
     --self:updateLoyalty(-0.8*sgs.ai_loyalty[target:objectName()],self.player:objectName())
     return true
 end
+
 
 sgs.ai_skill_cardchosen.fankui = function(self, who, flags)
 	local suit = sgs.ai_need_damaged.fankui(self, who)
@@ -78,6 +79,7 @@ sgs.ai_skill_cardchosen.fankui = function(self, who, flags)
 	end
 	return nil
 end
+
 
 sgs.ai_need_damaged.fankui = function (self, attacker)
 	if not self.player:hasSkill("guicai") then return false end
@@ -169,7 +171,7 @@ sgs.ai_skill_invoke.ganglie = function(self, data)
 end
 
 sgs.ai_need_damaged.ganglie = function (self, attacker)
-	if self:getDamagedEffects(attacker,self.player) return self:isFriend(attacker) end
+	if self:getDamagedEffects(attacker,self.player) then return self:isFriend(attacker) end
 	if self:isEnemy(attacker) and attacker:getHp() + attacker:getHandcardNum() <= 3 and 
 			not self:hasSkills(sgs.need_kongcheng.."|buqu", attacker) and sgs.isGoodTarget(attacker) then
 		return true

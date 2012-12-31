@@ -455,7 +455,7 @@ sgs.ai_need_damaged.shichou = function (self, attacker)
 			local role
 	        if sgs.isRolePredictable() and sgs.evaluatePlayerRole(player) == "rebel" then 
 				role="rebel" 
-			elseif if sgs.compareRoleEvaluation(player, "rebel", "loyalist") == "rebel" then 
+			elseif sgs.compareRoleEvaluation(player, "rebel", "loyalist") == "rebel" then 
 				role="rebel"
 			end
 			if victim:isAlive() and role=="rebel" then

@@ -772,7 +772,7 @@ sgs.ai_skill_invoke.EightDiagram = function(self, data)
     if self:hasSkills("guidao", self.enemies) and self:getFinalRetrial(sgs.hujiasource) == 2 then
         return false
     end	
-    if self:getDamagedEffects(self) then return false end
+    if self:getDamagedEffects(self.player) then return false end
     return true
 end
 
@@ -835,7 +835,7 @@ sgs.ai_skill_cardask.aoe = function(self, data, pattern, target, name)
 	local menghuo = self.room:findPlayerBySkillName("huoshou")
 	local attacker=self.room:getCurrent()
 	if menghuo and aoe:isKindOf("SavageAssault") then attacker = menghuo end
-	if self:getDamagedEffects(self,attacker) then return "." end
+	if self:getDamagedEffects(self.player,attacker) then return "." end
 
     if target:hasSkill("wuyan") and not (menghuo and aoe:isKindOf("SavageAssault")) then return "." end
 
@@ -1001,7 +1001,7 @@ sgs.ai_skill_cardask["duel-slash"] = function(self, data, pattern, target)
     if target:hasSkill("wuyan") or self.player:hasSkill("wuyan") then return "." end
 	if self.player:getMark("@fenyong") >0 and self.player:hasSkill("fenyong") then return "." end
 
-	if self:getDamagedEffects(self,target) then return "." end
+	if self:getDamagedEffects(self.player,target) then return "." end
     if self:isFriend(target) and target:hasSkill("rende") and self.player:hasSkill("jieming") then return "." end
     if (not self:isFriend(target) and self:getCardsNum("Slash")*2 >= target:getHandcardNum())
         or (target:getHp() > 2 and self.player:getHp() <= 1 and self:getCardsNum("Peach") == 0 and not self.player:hasSkill("buqu")) then
