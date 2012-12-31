@@ -280,6 +280,9 @@ function SmartAI:getUseValue(card)
 		if self.player:hasSkill("qiangxi") and card:isKindOf("Weapon") then v = 2 end
 		if self.player:hasSkill("kurou") and card:isKindOf("Crossbow") then return 9 end
 		if self:hasSkill("bazhen") or self:hasSkill("yizhong") and card:isKindOf("Armor") then v = 2 end
+		if self.role == "loyalist" and self.player:getKingdom()=="wei" and self.room:getLord():hasLordSkill("hujia") and card:isKindOf("EightDiagram") then
+			v = 9
+		end
 		if self:hasSkills(sgs.lose_equip_skill) then return 10 end
 	elseif card:getTypeId() == sgs.Card_Basic then
 		if card:isKindOf("Slash") then
