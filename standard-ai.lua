@@ -45,6 +45,8 @@ end
 
 sgs.ai_skill_invoke.fankui = function(self, data)
     local target = data:toPlayer()
+	if sgs.ai_need_damaged.fankui(self, target) then return true
+
     if self:isFriend(target) then
         return (target:hasSkill("xiaoji") and not target:getEquips():isEmpty()) or (self:isEquip("SilverLion",target) and target:isWounded())
     end
@@ -59,6 +61,82 @@ sgs.ai_skill_invoke.fankui = function(self, data)
     --self:updateLoyalty(-0.8*sgs.ai_loyalty[target:objectName()],self.player:objectName())
     return true
 end
+
+sgs.ai_skill_cardchosen.fankui = function(self, who, flags)
+	local suit = sgs.ai_need_damaged.fankui(self, who)
+	if not suit then return nil end
+
+	local cards = sgs.QList2Table(who:getEquips())
+	local handcards = sgs.QList2Table(who:getHandcards())
+	if #handcards==1 and handcards[1]:hasFlag("visible") then table.insert(cards,handcards[1]) end
+
+	for i=1,#cards,1 do
+		if (cards[i]:getSuit() == suit and suit ~=Card_Spade) or 
+			(cards[i]:getSuit() == suit and suit ==Card_Spade and cards[i]:getNumber()>=2 and cards[i]:getNumber()<=9)  then
+			return cards[i]
+		end
+	end
+	return nil
+end
+
+sgs.ai_need_damaged.fankui = function (self, attacker)
+	if not self.player:hasSkill("guicai") then return false end
+	local need_retrial=function(player)
+		local alive_num=self.room:alivePlayerCount()
+		return alive_num + player:getSeat() % alive_num > self.room:getCurrent():getSeat() 
+				and player:getSeat() < alive_num + self.player:getSeat() % alive_num				
+	end
+	local retrial_card ={["spade"]=nil,["heart"]=nil,["club"]=nil}
+	local attacker_card ={["spade"]=nil,["heart"]=nil,["club"]=nil}
+	
+	local handcards = sgs.QList2Table(self.player:getHandcards())
+	for i=1,#handcards,1 do
+		if handcards[i]:getSuit() == sgs.Card_Spade and handcards[i]:getNumber()>=2 and handcards[i]:getNumber()<=9 then
+			retrial_card.spade = true
+		end
+		if handcards[i]:getSuit() == sgs.Card_Heart then
+			retrial_card.heart = true
+		end
+		if handcards[i]:getSuit() == sgs.Card_Club then
+			retrial_card.club = true
+		end
+	end
+
+	local cards = sgs.QList2Table(attacker:getEquips())
+	local handcards = sgs.QList2Table(attacker:getHandcards())
+	if #handcards==1 and handcards[1]:hasFlag("visible") then table.insert(cards,handcards[1]) end
+
+	for i=1,#cards,1 do
+		if cards[i]:getSuit() == sgs.Card_Spade and cards[i]:getNumber()>=2 and cards[i]:getNumber()<=9 then
+			attacker_card.spade = sgs.Card_Spade
+		end
+		if cards[i]:getSuit() == sgs.Card_Heart then
+			attacker_card.heart = sgs.Card_Heart
+		end
+		if cards[i]:getSuit() == sgs.Card_Club then
+			attacker_card.club = sgs.Card_Club
+		end
+	end
+
+    for _, player in ipairs(players) do
+        if player:containsTrick("lightning") and self:getFinalRetrial(player) ==1 and need_retrial(player) then
+			if not retrial_card.spade and attacker_card.spade then return attacker_card.spade end
+		end
+
+		if self:isFriend(player) and not player:containsTrick("YanxiaoCard") and not player:hasSkill("qiaobian") then
+
+			if player:containsTrick("indulgence") and self:getFinalRetrial(player) ==1 and need_retrial(player) and player:getHandcardNum()>=player:getHp() then
+				if not retrial_card.heart and attacker_card.heart then return attacker_card.heart end
+			end
+
+			if player:containsTrick("supply_shortage") and self:getFinalRetrial(player) ==1 and need_retrial(player) and self:hasSkills("yongshi",player) then
+				if not retrial_card.club and attacker_card.club then return attacker_card.club end
+			end
+		end
+	end
+	return false
+end
+
 
 sgs.ai_skill_cardask["@guicai-card"]=function(self, data)
     local judge = data:toJudge()
@@ -88,6 +166,15 @@ sgs.ai_skill_invoke.ganglie = function(self, data)
     local mode = self.room:getMode()
     if mode:find("_mini_41") then return true
     else return not self:isFriend(data:toPlayer()) end
+end
+
+sgs.ai_need_damaged.ganglie = function (self, attacker)
+	if self:getDamagedEffects(attacker,self.player) return self:isFriend(attacker) end
+	if self:isEnemy(attacker) and attacker:getHp() + attacker:getHandcardNum() <= 3 and 
+			not self:hasSkills(sgs.need_kongcheng.."|buqu", attacker) and sgs.isGoodTarget(attacker) then
+		return true
+	end
+	return false
 end
 
 sgs.ai_skill_discard.ganglie = function(self, discard_num, min_num, optional, include_equip)
@@ -120,7 +207,7 @@ sgs.ai_skill_discard.ganglie = function(self, discard_num, min_num, optional, in
 end
 
 function sgs.ai_slash_prohibit.ganglie(self, to)
-    return self.player:getHandcardNum()+self.player:getHp() < 5
+    return self.player:getHandcardNum()+self.player:getHp() < 4
 end
 
 sgs.ai_chaofeng.xiahoudun = -3
@@ -221,6 +308,17 @@ sgs.ai_skill_invoke.tiandu = sgs.ai_skill_invoke.jianxiong
 
 function sgs.ai_slash_prohibit.tiandu(self, to)
     if self:isEnemy(to) and self:isEquip("EightDiagram", to) then return true end
+end
+
+sgs.ai_need_damaged.yiji = function (self, attacker)
+	if self:isFriend(self.room:getCurrent()) and self.room:getCurrent():isEquip("Crossbow") then return true end
+
+	self:sort(self.friends, "hp")
+
+	if self.friends[1]:objectName()==self.player:objectName() and self.player:isWeak() and self:getCardsNum("Peach")==0 then return false end
+	if #self.friends>1 and self.friends[2]:isWeak() then return true end	
+	
+	return self.player:getHp()>2 and sgs.turncount>2 and #self.friends>1
 end
 
 sgs.ai_chaofeng.guojia = -4

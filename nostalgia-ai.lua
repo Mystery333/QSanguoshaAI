@@ -112,6 +112,13 @@ function sgs.ai_slash_prohibit.nosenyuan(self)
 	if self:isWeak() then return true end
 end
 
+sgs.ai_need_damaged.nosenyuan = function (self, attacker)	
+	if self:isEnemy(attacker) and self:isWeak(attacker) then
+		return true
+	end
+	return false
+end
+
 nosxuanhuo_skill={}
 nosxuanhuo_skill.name="nosxuanhuo"
 table.insert(sgs.ai_skills,nosxuanhuo_skill)

@@ -141,7 +141,17 @@ sgs.ai_skill_discard.enyuan = function(self, discard_num, min_num, optional, inc
 end
 
 function sgs.ai_slash_prohibit.enyuan(self)
-	if self:isWeak() then return true end
+	local num=self.player:getHandcardNum()
+	if num>=3 or self:hasSkill("lianying") or (self:hasSkill("kongcheng") and num==2) then return false end
+	return true
+end
+
+
+sgs.ai_need_damaged.enyuan = function (self, attacker)	
+	if self:isEnemy(attacker) and self:isWeak(attacker) and attacker:getHandcardNum()<3 and not self:hasSkills("lianying|kongcheng",attacker) then
+		return true
+	end
+	return false
 end
 
 sgs.ai_skill_use["@@xuanhuo"] = function(self, prompt)

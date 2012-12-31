@@ -534,6 +534,15 @@ sgs.ai_skill_invoke.guixin = function(self, data)
 	return self.room:alivePlayerCount() > 2 or damage.damage > 1
 end
 
+sgs.ai_need_damaged.guixin = function (self, attacker)	
+	if self.room:alivePlayerCount() <=3 then return false end
+	local num =self.player:getHandcardNum()
+	if self.player:faceUp() and num - self.player:getHp()>2 then
+		return false
+	end
+	return true
+end
+
 sgs.ai_chaofeng.shencaocao = -6
 
 sgs.ai_skill_choice.wumou = function(self, choices)

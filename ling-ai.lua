@@ -140,6 +140,15 @@ sgs.ai_skill_invoke.neoganglie = function(self, data)
 	return false
 end
 
+sgs.ai_need_damaged.neoganglie = function (self, attacker)
+	if self:getDamagedEffects(attacker,self.player) return self:isFriend(attacker) end
+
+	if self:isEnemy(attacker) and attacker:getHp() <= 2 and not attacker:hasSkill("buqu") and sgs.isGoodTarget(attacker) then
+		return true
+	end
+	return false
+end
+
 sgs.ai_skill_choice.neoganglie = function(self, choices)
 	local target
 	for _, player in sgs.qlist(self.room:getOtherPlayers(self.player)) do

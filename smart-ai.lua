@@ -65,6 +65,7 @@ sgs.ai_choicemade_filter = 	{
 }
 
 sgs.card_lack = {}
+sgs.ai_need_damaged = {} 
 
 function setInitialTables()
 	sgs.current_mode_players = 	{loyalist = 0, rebel = 0, renegade = 0}
@@ -74,7 +75,7 @@ function setInitialTables()
 	sgs.draw_pile = 			global_room:getDrawPile()
 	sgs.lose_equip_skill = 		"xiaoji|xuanfeng|nosxuanfeng"
 	sgs.need_kongcheng = 		"lianying|kongcheng"
-	sgs.masochism_skill = 		"fankui|jieming|yiji|ganglie|enyuan|fangzhu|guixin|quanji"
+	sgs.masochism_skill = 		"fankui|jieming|yiji|ganglie|enyuan|fangzhu|guixin|quanji|neoganglie|nosenyuan"
 	sgs.wizard_skill = 			"guicai|guidao|jilve|tiandu"
 	sgs.wizard_harm_skill = 	"guicai|guidao|jilve"
 	sgs.priority_skill = 		"dimeng|haoshi|qingnang|jizhi|guzheng|qixi|jieyin|guose|duanliang|jujian|fanjian|lijian|manjuan|lihun"
@@ -1433,7 +1434,7 @@ function SmartAI:updatePlayers()
 		if #self.enemies == 0 then
 			local neutrality = {}
 			for _, aplayer in sgs.qlist(self.room:getOtherPlayers(self.player)) do
-				if self.lua_ai:relationTo(aplayer) == sgs.AI_Neutrality then table.insert(neutrality, aplayer) end
+				if self.lua_ai:relationTo(aplayer) == sgs.AI_Neutrality and not aplayer:isDead() then table.insert(neutrality, aplayer) end
 			end
 			local function compare_func(a,b)
 				return self:objectiveLevel(a) > self:objectiveLevel(b)
@@ -2114,7 +2115,7 @@ end
 function sgs.ai_skill_cardask.nullfilter(self, data, pattern, target)
 	if self.player:isDead() then return "." end
 	if not self:damageIsEffective(nil, nil, target) then return "." end
-	if self:getDamagedEffects(self) then return "." end
+	if self:getDamagedEffects(self.player,target) then return "." end
 	if target and target:getWeapon() and target:getWeapon():isKindOf("IceSword") and self.player:getCards("he"):length() > 2 then return end
 	if target and target:hasSkill("jueqing") then return end
 	if self:needBear() and self.player:getLostHp() < 2 then return "." end
@@ -2126,10 +2127,8 @@ function sgs.ai_skill_cardask.nullfilter(self, data, pattern, target)
 		if willTianxiang ~= "." then return "." end
 	elseif self.player:hasSkill("longhun") and self.player:getHp() > 1 then
 		return "."
-	end
-	if (self.player:hasSkill("yiji")) and self.player:getHp() > 2 then return "." end
+	end	
 	if target and target:hasSkill("guagu") and self.player:isLord() then return "." end
-	if self.player:hasSkill("jieming") and self:getJiemingChaofeng() <= -6 and self.player:getHp() >= 2 then return "." end
 	local sunshangxiang = self.room:findPlayerBySkillName("jieyin")
 	if sunshangxiang and sunshangxiang:isWounded() and self:isFriend(sunshangxiang) and not self.player:isWounded() 
 		and self.player:isMale() then
@@ -2962,25 +2961,17 @@ function SmartAI:damageIsEffective(player, nature, source)
 	return true
 end
 
-function SmartAI:getDamagedEffects(self, player)
-	player = player or self.player
+
+function SmartAI:getDamagedEffects(player, damage_from)
+	local attacker = damage_from and damage_from or self.room:getCurrent()
 	
-	if (player:getHp() > 1 or player:hasSkill("buqu")) and self:hasSkills(sgs.masochism_skill, player) then
-		local attacker = self.room:getCurrent()
-		if self:isEnemy(attacker, player) and attacker:getHp() <= 1 then
-			if self:hasSkills("ganglie|enyuan", player) then return true end
-		end
-		
-		if player:hasSkill("jieming") then
-			for _, friend in ipairs(self:getFriends(player)) do
-				if math.min(friend:getMaxHp(), 5) - friend:getHandcardNum() >= 3 then return true end
-			end
-		elseif player:hasSkill("fangzhu") then
-			if player:getLostHp() <= 1 then return true end
+	if sgs.isGoodHp(player) and not self:hasSkills("qianxi|jueqing", attacker) and not attacker:hasFlag("drank") and not attacker:hasFlag("luoyi") then		
+		for _, askill in sgs.qlist(player:getTriggerSkills()) do		
+			local callback = sgs.ai_need_damaged[askill]
+			if type(callback) == "function" and callback(self, attacker) then return true end
 		end
 	end
-	
-	return false
+	return false	
 end
 
 local function prohibitUseDirectly(card, player)

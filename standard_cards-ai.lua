@@ -7,18 +7,22 @@ local function hasExplicitRebel(room)
 end
 
 function sgs.isGoodHp(player)
-	local goodHp=player:getHp()>1 or getCardsNum("Peach",player)>0 or getCardsNum("Analeptic",player)>0
-	for _, p in sgs.qlist(global_room:getOtherPlayers(player)) do
-		if sgs.compareRoleEvaluation(p,"rebel","loyalist")==sgs.compareRoleEvaluation(player,"rebel","loyalist") 
-				and getCardsNum("Peach",p)>0 and not global_room:getCurrent():hasSkill("wansha") then
-			return true
-		end
-	end		
-	return goodHp
+	local goodHp=player:getHp()>1 or getCardsNum("Peach",player)>=1 or getCardsNum("Analeptic",player)>=1 or player:hasSkill("buqu")
+	if goodHp then 
+		return goodHp 
+	else
+		for _, p in sgs.qlist(global_room:getOtherPlayers(player)) do
+			if sgs.compareRoleEvaluation(p,"rebel","loyalist")==sgs.compareRoleEvaluation(player,"rebel","loyalist") 
+					and getCardsNum("Peach",p)>0 and not global_room:getCurrent():hasSkill("wansha") then
+				return true
+			end
+		end		
+		return false
+	end
 end
 
 function sgs.isGoodTarget(player)
-	local arr = {"jieming","yiji","guixin","fangzhu","neo_ganglie","miji"}
+	local arr = {"jieming","yiji","guixin","fangzhu","neoganglie","miji"}
 	local m_skill=false
 	local attacker = global_room:getCurrent()
 
@@ -40,7 +44,11 @@ function sgs.isGoodTarget(player)
 		return false
 	end
 
-	if (m_skill and sgs.isGoodHp(player)) or (player:hasSkill("rende") and player:getHp()>=3) then
+	if player:hasSkill("rende") and player:getHp()>=3 then
+		return false
+	end
+
+	if m_skill and sgs.isGoodHp(player) then
 		return false
 	else
 		return true
@@ -109,15 +117,28 @@ function sgs.getDefenseSlash(player)
 			defense = defense - 1			
 		end
 	end
+
+	local has_fire_slash
+	local cards= sgs.QList2Table(attacker:getHandcards())
+	for i = 1, #cards, 1 do		
+		if (attacker:hasWeapon("Fan") and cards[i]:isKindOf("Slash") and not cards[i]:isKindOf("ThunderSlash")) or cards[i]:isKindOf("FireSlash")  then
+			has_fire_slash = true
+			break
+		end
+	end
 	
-	if player:hasArmorEffect("Vine") and not ignoreArmor then defense = defense - 0.5 end	
+	if player:hasArmorEffect("Vine") and not ignoreArmor then 
+		defense = defense - 0.65 
+	end	
 
 	if player:isLord() then 
 		defense = defense -0.4
 		if sgs.isLordInDanger() then defense = defense - 0.7 end
 	end
 
-	if player:hasSkill("jijiu") then defense = defense -0.5 end
+	if player:hasSkill("jijiu") then defense = defense -0.3 end
+	if player:hasSkill("dimeng") then defense = defense -0.28 end
+	if player:hasSkill("guzheng") then defense = defense -0.25 end
 	return defense
 end
 
@@ -796,13 +817,20 @@ sgs.ai_use_value.SavageAssault = 3.9
 sgs.ai_use_priority.SavageAssault = 3.5
 
 sgs.ai_skill_cardask.aoe = function(self, data, pattern, target, name)
+
     if sgs.ai_skill_cardask.nullfilter(self, data, pattern, target) then return "." end
     if not self:damageIsEffective(nil, nil, target) then return "." end
-    local aoe = sgs.Sanguosha:cloneCard(name, sgs.Card_NoSuit, 0)
-    local menghuo = self.room:findPlayerBySkillName("huoshou")
+    local aoe = sgs.Sanguosha:cloneCard(name, sgs.Card_NoSuit, 0)    
     if self.player:hasSkill("wuyan") then return "." end
 	if self.player:getMark("@fenyong") >0 and self.player:hasSkill("fenyong") then return "." end
+
+	local menghuo = self.room:findPlayerBySkillName("huoshou")
+	local attacker=self.room:getCurrent()
+	if menghuo and aoe:isKindOf("SavageAssault") then attacker = menghuo end
+	if self:getDamagedEffects(self,attacker) then return "." end
+
     if target:hasSkill("wuyan") and not (menghuo and aoe:isKindOf("SavageAssault")) then return "." end
+
     if self.player:hasSkill("jianxiong") and self:getAoeValue(aoe) > -10 and
         (self.player:getHp()>1 or self:getAllPeachNum()>0) and not self.player:containsTrick("indulgence") then return "." end
 end
@@ -964,6 +992,8 @@ sgs.ai_skill_cardask["duel-slash"] = function(self, data, pattern, target)
     if sgs.ai_skill_cardask.nullfilter(self, data, pattern, target) then return "." end
     if target:hasSkill("wuyan") or self.player:hasSkill("wuyan") then return "." end
 	if self.player:getMark("@fenyong") >0 and self.player:hasSkill("fenyong") then return "." end
+
+	if self:getDamagedEffects(self,target) then return "." end
     if self:isFriend(target) and target:hasSkill("rende") and self.player:hasSkill("jieming") then return "." end
     if (not self:isFriend(target) and self:getCardsNum("Slash")*2 >= target:getHandcardNum())
         or (target:getHp() > 2 and self.player:getHp() <= 1 and self:getCardsNum("Peach") == 0 and not self.player:hasSkill("buqu")) then
@@ -1299,6 +1329,18 @@ end
 sgs.dynamic_value.control_card.Collateral = true
 
 sgs.ai_skill_cardask["collateral-slash"] = function(self, data, pattern, target, target2)
+	if target and target2 and self.getDamagedEffects(target2,self.player) then
+		for _, slash in ipairs(self:getCards("Slash")) do
+            if self:slashIsEffective(slash, target2) and self:isFriend(target2) then 
+                return slash:toString()
+            end 
+            if not self:slashIsEffective(slash, target2) and self:isEnemy(target2) then 
+                return slash:toString()
+            end 
+
+        end
+	end
+
     if self:needBear() then return "." end
     if target and target2 and not self:hasSkills(sgs.lose_equip_skill) and self:isEnemy(target2) then
         for _, slash in ipairs(self:getCards("Slash")) do
@@ -1339,7 +1381,7 @@ function SmartAI:useCardIndulgence(card, use)
 	local zhanghe_seat = zhanghe and zhanghe:faceUp() and self:isEnemy(zhanghe) and zhanghe:getSeat() or 0
 
     for _, enemy in ipairs(enemies) do
-        if self:hasSkills("lijian|fanjian|neo_fanjian",enemy) and not enemy:containsTrick("indulgence") and not enemy:containsTrick("YanxiaoCard") 
+        if self:hasSkills("lijian|fanjian|neofanjian",enemy) and not enemy:containsTrick("indulgence") and not enemy:containsTrick("YanxiaoCard") 
 				and not self:hasSkills("qiaobian|keji|shensu", enemy) and not enemy:isKongcheng() and enemy:faceUp() and self:objectiveLevel(enemy) > 3 then
 			if zhanghe_seat>0 and (enemy:getSeat() - zhanghe_seat) % self.room:alivePlayerCount() <= self.player:getSeat() then break	end
             use.card = card

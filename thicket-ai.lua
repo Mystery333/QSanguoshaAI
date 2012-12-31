@@ -64,6 +64,20 @@ sgs.ai_card_intention.FangzhuCard = function(card, from, tos)
 	end
 end
 
+sgs.ai_need_damaged.fangzhu = function (self, attacker)
+	self:sort(self.friends_noself)
+	for _, friend in ipairs(self.friends_noself) do
+		if not friend:faceUp() then
+			return true
+		end
+		if (friend:hasSkill("jushou") or friend:hasSkill("kuiwei")) and friend:getPhase() == sgs.Player_Play then
+			return true
+		end
+	end	
+	if self.player:getLostHp()<=1 and sgs.turncount>2 then return true end	
+	return false
+end
+
 sgs.ai_chaofeng.caopi = -3
 
 duanliang_skill={}
