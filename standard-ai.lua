@@ -6,16 +6,24 @@ table.insert(sgs.ai_global_flags, "hujiasource")
 
 sgs.ai_skill_invoke.hujia = function(self, data)
     local cards = self.player:getHandcards()
-    if sgs.hujiasource then return false end
+    if sgs.hujiasource then return false end	
     for _, friend in ipairs(self.friends_noself) do
-        if friend:getKingdom() == "wei" and self:isEquip("EightDiagram", friend) then return true end
+        if friend:getKingdom() == "wei" and self:isEquip("EightDiagram", friend) then return true end		
     end
+
+	local wei_num=0
+    local others = self.room:getOtherPlayers(self.player)
+	for _, other in sgs.qlist(others) do
+		if other:getKingdom() == "wei" and other:isAlive() then wei_num = wei_num + 1 end
+	end
+
+
     for _, card in sgs.qlist(cards) do
         if card:isKindOf("Jink") then
             return false
         end
     end
-    return true
+	return wei_num>0 and others:length()>1
 end
 
 sgs.ai_choicemade_filter.skillInvoke.hujia = function(player, promptlist)
@@ -120,6 +128,7 @@ sgs.ai_need_damaged.fankui = function (self, attacker)
 		end
 	end
 
+	local players = self.room:getOtherPlayers(self.player)
     for _, player in ipairs(players) do
         if player:containsTrick("lightning") and self:getFinalRetrial(player) ==1 and need_retrial(player) then
 			if not retrial_card.spade and attacker_card.spade then return attacker_card.spade end
@@ -399,7 +408,18 @@ sgs.ai_skill_invoke.jijiang = function(self, data)
             return false
         end
     end
-    if sgs.jijiangsource then return false else return true end
+
+	local shu_num=0
+    local others = self.room:getOtherPlayers(self.player)
+	for _, other in sgs.qlist(others) do
+		if other:getKingdom() == "shu" and other:isAlive() then shu_num = shu_num + 1 end
+	end
+
+    if sgs.jijiangsource then 
+		return false 
+	else 
+		return shu_num>0 and others:length()>1
+	end
 end
 
 sgs.ai_choicemade_filter.skillInvoke.jijiang = function(player, promptlist)
