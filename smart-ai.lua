@@ -1232,7 +1232,7 @@ function SmartAI:objectiveLevel(player)
 		elseif process == "neutral" then
             if sgs.turncount <=1 then return 0 end
 
-            local renegade_attack_skill = string:format("buqu|%s|%s|%s|%s",sgs.priority_skill,sgs.save_skill,sgs.recover_skill,sgs.drawpeach_skill)
+            local renegade_attack_skill = string.format("buqu|%s|%s|%s|%s",sgs.priority_skill,sgs.save_skill,sgs.recover_skill,sgs.drawpeach_skill)
             for i=1, #players, 1 do
                 if not players[i]:isLord() and self:hasSkills(renegade_attack_skill,players[i]) then return 5 end
                 if not players[i]:isLord() and math.abs(sgs.ai_chaofeng[player[i]:getGeneralName()] or 0) >=3 then return 5 end
