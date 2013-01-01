@@ -92,11 +92,11 @@ function sgs.getDefenseSlash(player)
 	end
 	
 	local hujiaJink=0
-	if player:hasLordSkill("hujia") or (global_room:getLord():hasLordSkill("hujia") and player:hasSkill("weidi")) then
+	if player:hasLordSkill("hujia") then
 			local lieges = global_room:getLieges("wei", player)			
 			for _, liege in sgs.qlist(lieges) do
 				if sgs.compareRoleEvaluation(liege,"rebel","loyalist")==sgs.compareRoleEvaluation(player,"rebel","loyalist") then
-					hujiaJink = hujiaJink + getCardsNum("Peach",liege)
+					hujiaJink = hujiaJink + getCardsNum("Jink",liege)
 					if liege:hasArmorEffect("EightDiagram") then hujiaJink=hujiaJink + 0.8 end
 				end
 			end
