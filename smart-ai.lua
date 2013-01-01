@@ -1235,7 +1235,7 @@ function SmartAI:objectiveLevel(player)
             local renegade_attack_skill = string.format("buqu|%s|%s|%s|%s",sgs.priority_skill,sgs.save_skill,sgs.recover_skill,sgs.drawpeach_skill)
             for i=1, #players, 1 do
                 if not players[i]:isLord() and self:hasSkills(renegade_attack_skill,players[i]) then return 5 end
-                if not players[i]:isLord() and math.abs(sgs.ai_chaofeng[player[i]:getGeneralName()] or 0) >=3 then return 5 end
+                if not players[i]:isLord() and math.abs(sgs.ai_chaofeng[players[i]:getGeneralName()] or 0) >=3 then return 5 end
             end
             return players:isLord() and 0 or 3 
 		elseif process:match("rebel") then
