@@ -1143,8 +1143,7 @@ function SmartAI:useCardSnatchOrDismantlement(card, use)
         end
     end
 
-    self:sort(self.enemies,"defense")
-    if #self.enemies > 0 and sgs.getDefense(self.enemies[1]) >= 8 then self:sort(self.enemies, "threat") end
+    self:sort(self.enemies,"defenseSlash")
     local enemies = self:exclude(self.enemies, card)
     self:sort(self.friends_noself,"defense")
     local friends = self:exclude(self.friends_noself, card)
@@ -1193,11 +1192,18 @@ function SmartAI:useCardSnatchOrDismantlement(card, use)
 	for i= 1,2,1 do
 		local targets={}
 		for _, enemy in ipairs(enemies) do
-			if not enemy:isNude() and self:hasTrickEffective(card, enemy) and not self:needKongcheng(enemy) and not enemy:hasSkill("kongcheng") then
-				if enemy:getHandcardNum() == i and sgs.getDefenseSlash(enemy)<3 and enemy:getHp()<=3 then 
-					use.card = card
+			if not enemy:isNude() and self:hasTrickEffective(card, enemy) and not self:needKongcheng(enemy) and not self:hasSkills("kongcheng|lianying|shangshi",enemy) then
+				if enemy:getHandcardNum() == i and sgs.getDefenseSlash(enemy)<3 and enemy:getHp()<=3 then
+                    local cardchosen
+                    if self.player:distanceTo(enemy) == self.player:getAttackRange()+1 and enemy:getDefensiveHorse() then
+                        cardchosen = enemy:getDefensiveHorse():getEffectiveId()
+                    else
+                        cardchosen = self:getCardRandomly(enemy, "h")
+                    end
+
+                    use.card = card					
 					if use.to then
-						sgs.ai_skill_cardchosen[name] = self:getCardRandomly(enemy, "h")
+						sgs.ai_skill_cardchosen[name] = cardchosen
 						use.to:append(enemy)
 						self:speak("hostile", self.player:isFemale())
 					end
