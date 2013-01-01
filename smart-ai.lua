@@ -1229,7 +1229,15 @@ function SmartAI:objectiveLevel(player)
 					return 5
 				end
 			end	
-		elseif process == "neutral" then return 0
+		elseif process == "neutral" then
+            if sgs.turncount <=1 then return 0 end
+
+            local renegade_attack_skill = string:format("buqu|%s|%s|%s|%s",sgs.priority_skill,sgs.save_skill,sgs.recover_skill,sgs.drawpeach_skill)
+            for i=1, #players, 1 do
+                if not players[i]:isLord() and self:hasSkills(renegade_attack_skill,players[i]) then return 5 end
+                if not players[i]:isLord() and math.abs(sgs.ai_chaofeng[player[i]:getGeneralName()] or 0) >=3 then return 5 end
+            end
+            return players:isLord() and 0 or 3 
 		elseif process:match("rebel") then
 			if target_role == "rebel" then 
 				if process == "rebel" then return 5 else return 3 end			
@@ -1255,6 +1263,8 @@ function SmartAI:objectiveLevel(player)
 	
 	if self.player:isLord() or self.role == "loyalist" then
 		if player:isLord() then return -2 end
+        if self.player:isLord() and #players>=4 and sgs.turncount==0 then return 0 end
+        if self.role =="loyalist" and #players>=4 and sgs.turncount==1 and self.player:getSeat()==2 then return 0 end
 
 		if process:match("rebel") and rebel_num>1 and target_role=='renegade' then return -1 end
 
@@ -1291,7 +1301,8 @@ function SmartAI:objectiveLevel(player)
 		else return 0 end
 	elseif self.role == "rebel" then
 		if process:match("loyalist") and loyal_num>0 and target_role=='renegade' then return -1 end
-		if player:isLord() then return 5
+        if sgs.turncount==1 and self.player:getSeat()==2 then return player:isLord() and 5 or 0 end
+        if player:isLord() then return 5
 		elseif sgs.evaluatePlayerRole(player) == "loyalist" then return 5
 		elseif sgs.evaluateRoleTrends(player) == "loyalist" then return 3.5
 		elseif sgs.evaluatePlayerRole(player) == "rebel" then return -2
