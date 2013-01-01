@@ -78,7 +78,7 @@ function setInitialTables()
 	sgs.masochism_skill = 		"fankui|jieming|yiji|ganglie|enyuan|fangzhu|guixin|quanji|neoganglie|nosenyuan"
 	sgs.wizard_skill = 			"guicai|guidao|jilve|tiandu"
 	sgs.wizard_harm_skill = 	"guicai|guidao|jilve"
-	sgs.priority_skill = 		"dimeng|haoshi|qingnang|jizhi|guzheng|qixi|jieyin|guose|duanliang|jujian|fanjian|lijian|manjuan|lihun"
+	sgs.priority_skill = 		"dimeng|haoshi|qingnang|jizhi|guzheng|qixi|jieyin|guose|duanliang|jujian|fanjian|neofanjian|lijian|manjuan|lihun"
 	sgs.save_skill = 			"jijiu|buyi|jiefan|chunlao"
 	sgs.exclusive_skill = 		"huilei|duanchang|enyuan|wuhun|buqu|yiji|ganglie|guixin|jieming|miji"
 	sgs.cardneed_skill =        "paoxiao|tianyi|xianzhen|shuangxiong|jizhi|guose|duanliang|qixi|qingnang|" ..
@@ -627,7 +627,7 @@ function SmartAI:sortByUseValue(cards,inverse)
 	table.sort(cards, compare_func)
 end
 
-function SmartAI:sortByUsePriority(cards)
+function SmartAI:sortByUsePriority(cards, player)
 	local compare_func = function(a,b)
 		local value1 = self:getUsePriority(a)
 		local value2 = self:getUsePriority(b)
@@ -635,7 +635,7 @@ function SmartAI:sortByUsePriority(cards)
 		if value1 ~= value2 then
 			return value1 > value2
 		else
-			return a:getNumber() > b:getNumber()
+			return a:getNumber() < b:getNumber()
 		end
 	end
 
@@ -2680,6 +2680,7 @@ function SmartAI:askForSinglePeach(dying)
 	local forbid = sgs.Sanguosha:cloneCard("peach", sgs.Card_NoSuit, 0)
 	if self.player:isDead() then return "." end
 	if self.player:isLocked(forbid) or dying:isLocked(forbid) then return "." end
+    if self.role == "renegade" and not dying:isLord() and self.room:getCurrent():objectName() == self.player:objectName() then return "." end
 	if self:isFriend(dying) then
 		if self:needDeath(dying) then return "." end
 		local buqu = dying:getPile("buqu")
@@ -3095,7 +3096,7 @@ function SmartAI:getCardId(class_name, player)
 	player = player or self.player
 	local cards = player:getCards("he")
 	cards = sgs.QList2Table(cards)
-	self:sortByUsePriority(cards)
+	self:sortByUsePriority(cards,player)
 	local card_str = self:getGuhuoCard(class_name, player) or cardsView(class_name, player)
 	if card_str then return card_str end
 
