@@ -134,8 +134,11 @@ end
 sgs.ai_skill_invoke.neoganglie = function(self, data)
 	local target = data:toPlayer()
 	if not self:isFriend(target) then
+        if (self:hasSkills(sgs.masochism_skill,target) or self:getDamagedEffects(target,self.player)) and target:getHandcardNum()<=1 then return false end
 		self.room:setPlayerFlag(target, "ganglie_target")
 		return true
+    else
+        if self:getDamagedEffects(target,self.player) then return true end
 	end
 	return false
 end
@@ -157,9 +160,10 @@ sgs.ai_skill_choice.neoganglie = function(self, choices)
 			self.room:setPlayerFlag(target, "-ganglie_target")
 		end
 	end
-	if self:hasSkills(sgs.masochism_skill,target) and target:getHp() >= target:getHandcardNum() 
-		and target:getHandcardNum() > 1 then
-			return "throw"
+    if self:getDamagedEffects(target,self.player) and self:isFriend(target) then return "damage" end
+
+	if (self:hasSkills(sgs.masochism_skill,target) or self:getDamagedEffects(target,self.player)) and target:getHandcardNum() > 1 then
+		return "throw"
 	end
 	return "damage"
 end

@@ -175,8 +175,10 @@ sgs.ai_chaofeng.simayi = -2
 
 sgs.ai_skill_invoke.ganglie = function(self, data)
     local mode = self.room:getMode()
-    if mode:find("_mini_41") then return true
-    else return not self:isFriend(data:toPlayer()) end
+    if mode:find("_mini_41") then return true end
+    local who=data:toPlayer()
+    if self:getDamagedEffects(who,self.player) then return self:isFriend(who) end
+    return not self:isFriend(who)
 end
 
 sgs.ai_need_damaged.ganglie = function (self, attacker)
