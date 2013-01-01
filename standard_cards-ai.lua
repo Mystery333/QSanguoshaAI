@@ -444,8 +444,13 @@ sgs.ai_skill_cardask["slash-jink"] = function(self, data, pattern, target)
             if self.player:isChained() and self:isGoodChainTarget(self.player) then return "." end
         end
     else
-        if not effect.slash:hasFlag("drank") then
-            if target:hasSkill("mengjin") and self.player:hasSkill("jijiu") then return "." end
+        if not effect.slash:hasFlag("drank") and not target:hasFlag("luoyi") then
+            if target:hasSkill("mengjin") then
+                if self:hasSkills("jijiu|qingnang") and self.player:getCards("he"):length()>1 then return "." end
+                if self:getCardsNum("Peach") >0  and not self.player:hasSkill("tuntian") and not self.player:containsTrick("indulgence") then
+                    return "."
+                end
+            end
         end
         if not (self.player:getHandcardNum() == 1 and self:hasSkills(sgs.need_kongcheng)) and not target:hasSkill("qianxi") then
             if self:isEquip("Axe", target) then

@@ -409,7 +409,7 @@ sgs.ai_skill_use_func.TiaoxinCard = function(card,use,self)
 	if #targets == 0 then return end
 
 	if use.to then
-		self:sort(targets, "hp")
+		self:sort(targets, "defenseSlash")
 		use.to:append(targets[1])
 	end
 	use.card = sgs.Card_Parse("@TiaoxinCard=.")
