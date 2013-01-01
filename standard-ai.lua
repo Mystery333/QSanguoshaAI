@@ -343,6 +343,17 @@ sgs.ai_view_as.qingguo = function(card, player, card_place)
     end
 end
 
+sgs.ai_skill_invoke.luoshen = function(self, data)
+    local null_card = self:getCardId("Nullification")
+    if self.player:containsTrick("indulgence") then
+        if null_card then return true end
+        local erzhang = self.room:findPlayerBySkillName("guzheng")
+        if erzhang and self:isEnemy(erzhang) then return false end
+    end
+    return true
+end
+
+
 sgs.zhenji_suit_value = 
 {
     spade = 4.1,

@@ -271,7 +271,7 @@ sgs.ai_skill_use["@@xuanfeng"] = function(self, prompt)
 	if #self.enemies == 0 then
 		return "."
 	end
-	self:sort(self.enemies, "defense")
+	self:sort(self.enemies, "defenseSlash")
 	
 	local first_index, second_index
 	for i=1, #self.enemies-1 do
@@ -299,7 +299,7 @@ sgs.ai_card_intention.XuanfengCard = 80
 
 sgs.ai_skill_playerchosen.xuanfeng = function(self, targets)	
 	targets = sgs.QList2Table(targets)
-	self:sort(targets,"defense")
+	self:sort(targets,"defenseSlash")
 	for _, enemy in ipairs(self.enemies) do
 		if not self:needKongcheng(enemy) and not enemy:isNude() and
 		not (enemy:hasSkill("guzheng") and self.room:getCurrent():getPhase() == sgs.Player_Discard) then
