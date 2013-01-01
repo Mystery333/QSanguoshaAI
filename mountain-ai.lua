@@ -499,6 +499,11 @@ sgs.ai_skill_use_func.ZhibaCard = function(card, use, self)
 	end
 end
 
+sgs.ai_need_damaged.hunzi = function (self, attacker)
+	if self.player:getMark("hunzi")==0 and self.player:getMark("@waked")==0 then return true end
+	return false
+end
+
 sgs.ai_skill_choice.zhiba_pindian = function(self, choices)
 	local who = self.room:getCurrent()
 	if self:isEnemy(who) then return "reject"

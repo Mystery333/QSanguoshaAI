@@ -54,6 +54,10 @@ function sgs.isGoodTarget(player)
 		end
 	end
 
+    if player:hasSkill("hunzhi") and player:getMark("hunzi")==0 and player:getMark("@waked")==0 and player:isLord() then
+		return false
+	end
+
 
 	if m_skill and sgs.isGoodHp(player) then
 		return false
