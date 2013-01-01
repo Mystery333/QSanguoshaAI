@@ -2,7 +2,7 @@ local function card_for_qiaobian(self, who, return_prompt)
 	local card, target
 	if self:isFriend(who) then
 		local judges = who:getJudgingArea()
-		if not judges:isEmpty() then
+		if not judges:isEmpty() and not who:containsTrick("YanxiaoCard") then
 			for _, judge in sgs.qlist(judges) do
 				card = sgs.Sanguosha:getCard(judge:getEffectiveId())
 				for _, enemy in ipairs(self.enemies) do
@@ -77,12 +77,14 @@ sgs.ai_skill_discard.qiaobian = function(self, discard_num, min_num, optional, i
 	if #to_discard < 1 then return {} end
 	current_phase = self.player:getMark("qiaobianPhase")
 	if current_phase == sgs.Player_Judge then
-		if (self.player:containsTrick("supply_shortage") and self.player:getHp() > self.player:getHandcardNum()) or
-			(self.player:containsTrick("indulgence") and self.player:getHandcardNum() > self.player:getHp()-1) or
-			(self.player:containsTrick("lightning") and not self:hasWizard(self.friends) and self:hasWizard(self.enemies)) or
-			(self.player:containsTrick("lightning") and #self.friends > #self.enemies) then
-			return to_discard
-		end
+        if not self.player:containsTrick("YanxiaoCard") then
+            if (self.player:containsTrick("supply_shortage") and self.player:getHp() > self.player:getHandcardNum()) or
+                (self.player:containsTrick("indulgence") and self.player:getHandcardNum() > self.player:getHp()-1) or
+                (self.player:containsTrick("lightning") and not self:hasWizard(self.friends) and self:hasWizard(self.enemies)) or
+                (self.player:containsTrick("lightning") and #self.friends > #self.enemies) then
+                return to_discard
+            end
+        end
 	elseif current_phase == sgs.Player_Draw then
 		local cardstr = sgs.ai_skill_use["@@tuxi"](self, "@tuxi")
 		if cardstr:match("->") then
@@ -125,7 +127,7 @@ sgs.ai_skill_discard.qiaobian = function(self, discard_num, min_num, optional, i
 		-- if self.player:getHandcardNum()-2 > self.player:getHp() then return "." end
 		self:sort(self.enemies, "hp")
 		for _, friend in ipairs(self.friends) do
-			if not friend:getCards("j"):isEmpty() and card_for_qiaobian(self, friend, ".") then
+			if not friend:getCards("j"):isEmpty() and not friend:containsTrick("YanxiaoCard") and card_for_qiaobian(self, friend, ".") then
 				-- return "@QiaobianCard=" .. card:getEffectiveId() .."->".. friend:objectName()
 				return to_discard
 			end
@@ -206,7 +208,7 @@ sgs.ai_skill_use["@qiaobian"] = function(self, prompt)
 
 		self:sort(self.enemies, "hp")
 		for _, friend in ipairs(self.friends) do
-			if not friend:getCards("j"):isEmpty() and card_for_qiaobian(self, friend, ".") then
+			if not friend:getCards("j"):isEmpty() and not friend:containsTrick("YanxiaoCard") and card_for_qiaobian(self, friend, ".") then
 				-- return "@QiaobianCard=" .. card:getEffectiveId() .."->".. friend:objectName()
 				return "@QiaobianCard=.->".. friend:objectName()
 			end
