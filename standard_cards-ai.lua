@@ -233,7 +233,9 @@ end
 
 function SmartAI:slashIsAvailable(player)
     player = player or self.player
-    local slash = self:getCard("Slash", player) or sgs.Sanguosha:cloneCard("slash", sgs.Card_NoSuit, 0)
+    local slash_1 = self:getCard("Slash", player)
+    local slash_2 = sgs.Sanguosha:cloneCard("slash", sgs.Card_NoSuit, 0)
+    local slash = player:hasSkill("guhuo") and slash_2 or (slash_1 or slash_2)
     assert(slash)
     return slash:isAvailable(player)
 end
