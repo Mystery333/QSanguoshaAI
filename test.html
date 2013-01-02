@@ -1,0 +1,60 @@
+<!doctype html>
+<!-- The Time Machine GitHub pages theme was designed and developed by Jon Rohan, on Feb 7, 2012. -->
+<!-- Follow him for fun. http://twitter.com/jonrohan. Tail his code on http://github.com/jonrohan -->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <script src="javascripts/jquery-1.4.2.min.js" type="text/javascript"></script>
+  <link rel="stylesheet" href="stylesheets/stylesheet.css" media="screen"/>
+  <link rel="stylesheet" href="stylesheets/pygment_trac.css"/>
+  <title>新神杀AI再起计划</title>
+  <meta name="description" content="新神杀AI再起项目，基于贴吧置顶帖 QSanguoshaTest1221[常用LUA整合版]">
+
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+</head>
+
+<body>
+
+  <div class="wrapper">
+    <header>
+      <h1 class="title">新神杀AI再起计划</h1>
+    </header>
+    <div id="container">
+      <p class="tagline">新神杀AI再起项目，适应太阳神三国杀测试版的所有版本</p>
+      <div id="main" role="main">
+        <div class="download-bar">	
+		<span class="desc">请使用新神杀1221版本，5人或8人身份局关身份预知，解压后复制所有lua文件放入游戏的 lua/ai目录，覆盖替换原来的文件</span>
+        <span class="blc"></span><span class="trc"></span>
+        </div>
+        <article class="markdown-body">          
+<p class="download">
+ <b>下载地址：</b>	
+ <!--<a href="https://github.com/haveatry823/QSanguoshaAI/zipball/master">稳定版AI(推荐)</a>-->
+ <a href="https://github.com/haveatry823/QSanguoshaAI/zipball/dev">开发版AI(测试用)</a>
+ QQ群：191748263
+ <a href="#" onclick="return !!alert('暂时还没有')">贴吧讨论帖</a>
+ <a href="https://github.com/haveatry823/QSanguoshaAI/">项目地址</a>
+</p>
+
+
+<br/><h3>更新日志</h3>
+<div id="changelog"></div>
+        </article>
+      </div>
+    </div>
+    
+  </div>
+  
+  <script type="text/javascript">
+	$(function(){
+		$.get("https://raw.github.com/haveatry823/QSanguoshaAI/dev/changelog.txt", function(result){
+			alert(result);
+			$("#changelog").html("<pre class='changelog'>"+result+"</pre>");
+		 });
+	});
+  </script>
+  
+</body>
+</html>
