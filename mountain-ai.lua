@@ -6,7 +6,8 @@ local function card_for_qiaobian(self, who, return_prompt)
 			for _, judge in sgs.qlist(judges) do
 				card = sgs.Sanguosha:getCard(judge:getEffectiveId())
 				for _, enemy in ipairs(self.enemies) do
-					if not enemy:containsTrick(judge:objectName()) and not self.room:isProhibited(self.player, enemy, judge) then
+					if not enemy:containsTrick(judge:objectName()) and not self.room:isProhibited(self.player, enemy, judge) 
+						and not enemy:containsTrick("YanxiaoCard") then
 						target = enemy
 						break
 					end
@@ -36,26 +37,51 @@ local function card_for_qiaobian(self, who, return_prompt)
 			end
 		end
 	else
-		if not who:hasEquip() or (who:getCards("e"):length() == 1 and who:getArmor() and who:getArmor():isKindOf("GaleShell")) then return nil end
-		local card_id = self:askForCardChosen(who, "e", "snatch")
-		if card_id >= 0 and who:hasEquip(sgs.Sanguosha:getCard(card_id)) then card = sgs.Sanguosha:getCard(card_id) end
-		local targets = {}
-		if card then
-			for _, friend in ipairs(self.friends) do
-				if friend:getCards("e"):isEmpty() or not self:getSameEquip(card, friend) then
-					table.insert(targets, friend)
-					break
+		local judges = who:getJudgingArea()
+		if who:containsTrick("YanxiaoCard") then
+			for _, judge in sgs.qlist(judges) do
+				if judge:objectName()=="YanxiaoCard" then
+					card = sgs.Sanguosha:getCard(judge:getEffectiveId())
+					for _, friend in ipairs(self.friends) do
+						if not friend:containsTrick(judge:objectName()) and not self.room:isProhibited(self.player, friend, judge) 
+							and not friend:getJudgingArea():isEmpty() then
+							target = friend
+							break
+						end
+					end
+					if target then break end
+					for _, friend in ipairs(self.friends) do
+						if not friend:containsTrick(judge:objectName()) and not self.room:isProhibited(self.player, friend, judge) then
+							target = friend
+							break
+						end
+					end
+					if target then break end
 				end
 			end
 		end
-		
-		if #targets > 0 then
-			if card:isKindOf("Weapon") or card:isKindOf("OffensiveHorse") then
-				self:sort(targets, "threat")
-				target = targets[#targets]
-			else
-				self:sort(targets,"defense")
-				target = targets[1]
+		if card==nil or target==nil then
+			if not who:hasEquip() or (who:getCards("e"):length() == 1 and who:getArmor() and who:getArmor():isKindOf("GaleShell")) then return nil end
+			local card_id = self:askForCardChosen(who, "e", "snatch")
+			if card_id >= 0 and who:hasEquip(sgs.Sanguosha:getCard(card_id)) then card = sgs.Sanguosha:getCard(card_id) end
+			local targets = {}
+			if card then
+				for _, friend in ipairs(self.friends) do
+					if friend:getCards("e"):isEmpty() or not self:getSameEquip(card, friend) then
+						table.insert(targets, friend)
+						break
+					end
+				end
+			end
+			
+			if #targets > 0 then
+				if card:isKindOf("Weapon") or card:isKindOf("OffensiveHorse") then
+					self:sort(targets, "threat")
+					target = targets[#targets]
+				else
+					self:sort(targets,"defense")
+					target = targets[1]
+				end
 			end
 		end
 	end
@@ -129,6 +155,12 @@ sgs.ai_skill_discard.qiaobian = function(self, discard_num, min_num, optional, i
 		for _, friend in ipairs(self.friends) do
 			if not friend:getCards("j"):isEmpty() and not friend:containsTrick("YanxiaoCard") and card_for_qiaobian(self, friend, ".") then
 				-- return "@QiaobianCard=" .. card:getEffectiveId() .."->".. friend:objectName()
+				return to_discard
+			end
+		end
+		
+		for _, enemy in ipairs(self.enemies) do
+			if not enemy:getCards("j"):isEmpty() and enemy:containsTrick("YanxiaoCard") and card_for_qiaobian(self, enemy, ".") then
 				return to_discard
 			end
 		end
@@ -211,6 +243,13 @@ sgs.ai_skill_use["@qiaobian"] = function(self, prompt)
 			if not friend:getCards("j"):isEmpty() and not friend:containsTrick("YanxiaoCard") and card_for_qiaobian(self, friend, ".") then
 				-- return "@QiaobianCard=" .. card:getEffectiveId() .."->".. friend:objectName()
 				return "@QiaobianCard=.->".. friend:objectName()
+			end
+		end
+		
+		for _, enemy in ipairs(self.enemies) do
+			if not enemy:getCards("j"):isEmpty() and enemy:containsTrick("YanxiaoCard") and card_for_qiaobian(self, enemy, ".") then
+				-- return "@QiaobianCard=" .. card:getEffectiveId() .."->".. friend:objectName()
+				return "@QiaobianCard=.->".. enemy:objectName()
 			end
 		end
 
