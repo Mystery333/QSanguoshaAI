@@ -1267,10 +1267,10 @@ function SmartAI:objectiveLevel(player)
 	
 	if self.player:isLord() or self.role == "loyalist" then
 		if player:isLord() then return -2 end
-        if self.player:isLord() and #players>=4 and sgs.turncount==0 then return 0 end
-        if self.role =="loyalist" and #players>=4 and sgs.turncount==1 and self.player:getSeat()==2 then return 0 end
-
 		if process:match("rebel") and rebel_num>1 and target_role=='renegade' then return -1 end
+
+        if #players>=4 and sgs.role_evaluation[player:objectName()]["rebel"] ==30 and sgs.role_evaluation[player:objectName()]["loyalist"] ==30 then return 0 end
+      
 
 		if rebel_num == 0 then
 			if sgs.evaluatePlayerRole(player) == "renegade" then
@@ -1305,7 +1305,8 @@ function SmartAI:objectiveLevel(player)
 		else return 0 end
 	elseif self.role == "rebel" then
 		if process:match("loyalist") and loyal_num>0 and target_role=='renegade' then return -1 end
-        if sgs.turncount==1 and self.player:getSeat()==2 then return player:isLord() and 5 or 0 end
+         if #players>=4 and sgs.role_evaluation[player:objectName()]["rebel"] ==30 and sgs.role_evaluation[player:objectName()]["loyalist"] ==30 then return 0 end
+      
         if player:isLord() then return 5
 		elseif sgs.evaluatePlayerRole(player) == "loyalist" then return 5
 		elseif sgs.evaluateRoleTrends(player) == "loyalist" then return 3.5
@@ -3115,6 +3116,23 @@ function SmartAI:getKnownNum(player)
 		return known
 	end
 end
+
+
+function getKnownCard(player,class_name,viewas)
+    local cards = player:getHandcards()
+    local known = 0
+    for _, card in sgs.qlist(cards) do
+        local flag=string.format("%s_%s_%s","visible",global_room:getCurrent():objectName(),player:objectName())
+        if card:hasFlag("visible") or card:hasFlag(flag) then
+            if (viewas and ((class_name=="Slash" and is_a_slash(player,card)) or (class_name=="Jink" and is_a_jink(player,card))))  
+                    or card:isKindOf(class_name) then 
+                known = known + 1 
+            end
+        end
+    end
+    return known
+end
+
 
 function SmartAI:getCardId(class_name, player)
 	player = player or self.player

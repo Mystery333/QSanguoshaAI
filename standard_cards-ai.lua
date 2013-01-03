@@ -147,6 +147,8 @@ function sgs.getDefenseSlash(player)
 		if sgs.isLordInDanger() then defense = defense - 0.7 end
 	end
 
+    if not player:faceUp() then defense = defense -0.35 end
+
 	if player:hasSkill("jijiu") then defense = defense -0.3 end
 	if player:hasSkill("dimeng") then defense = defense -0.28 end
 	if player:hasSkill("guzheng") then defense = defense -0.25 end

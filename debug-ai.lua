@@ -67,7 +67,7 @@ function debugFunc(self, room, player, data)
             for i=1, #players, 1 do
                 local level=self:objectiveLevel(players[i])
                 local rel =level>0 and "敌对" or (level<0 and "友好" or "中立")
-                rel = rel .. level
+                rel = rel .. " " .. level
 
 			    debugmsg("%s[%s]: %d:%d:%d %s",
                     sgs.Sanguosha:translate(players[i]:getGeneralName()),                    
