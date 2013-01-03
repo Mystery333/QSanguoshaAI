@@ -324,7 +324,11 @@ function sgs.ai_slash_prohibit.tiandu(self, to)
 end
 
 sgs.ai_need_damaged.yiji = function (self, attacker)
-	if self:isFriend(self.room:getCurrent()) and self.room:getCurrent():isEquip("Crossbow") then return true end
+    local need_card = false
+    local current = self.room:getCurrent()
+    if current:isEquip("Crossbow") or current:hasSkill("paoxiao") or current:hasFlag("shuangxiong") then need_card = true end
+
+	if self:isFriend(current) and need_card then return true end
 
 	self:sort(self.friends, "hp")
 

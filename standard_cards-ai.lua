@@ -356,25 +356,7 @@ function SmartAI:useCardSlash(card, use)
         end 
     end
 
-    for _, friend in ipairs(self.friends_noself) do
-        if friend:hasSkill("yiji") and friend:getLostHp() < 1 and
-            not (friend:containsTrick("indulgence") or friend:containsTrick("supply_shortage")) then
-            local slash_prohibit = false
-            slash_prohibit = self:slashProhibit(card, friend)
-            if not slash_prohibit then
-                if ((self.player:canSlash(friend, card, not no_distance)) or
-                    (use.isDummy and (self.player:distanceTo(friend) <= self.predictedRange))) and
-                    self:slashIsEffective(card, friend) then
-                    use.card = card
-                    if use.to then
-                        use.to:append(friend)
-                        self:speak("yiji")
-                        if self.slash_targets <= use.to:length() then return end
-                    end
-                end
-            end
-        end
-    end
+
 end
 
 sgs.ai_skill_use.slash = function(self, prompt)
