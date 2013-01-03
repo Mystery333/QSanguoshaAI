@@ -327,6 +327,7 @@ sgs.ai_need_damaged.yiji = function (self, attacker)
     local need_card = false
     local current = self.room:getCurrent()
     if current:isEquip("Crossbow") or current:hasSkill("paoxiao") or current:hasFlag("shuangxiong") then need_card = true end
+    if self:hasSkills("jieyin|jijiu",current) and self:getOverflow(current)<=0 then need_card = true end
 
 	if self:isFriend(current) and need_card then return true end
 
