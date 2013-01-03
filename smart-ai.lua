@@ -64,8 +64,9 @@ sgs.ai_choicemade_filter = 	{
 	playerChosen =			{}
 }
 
-sgs.card_lack = {}
-sgs.ai_need_damaged = {} 
+sgs.card_lack =             {}
+sgs.ai_need_damaged =       {}
+sgs.ai_debug_func = 	    {}
 
 function setInitialTables()
 	sgs.current_mode_players = 	{loyalist = 0, rebel = 0, renegade = 0}
@@ -143,6 +144,7 @@ function SmartAI:initialize(player)
 		sgs.initialized = true
 		sgs.ais = {}
 		sgs.turncount = 0
+        sgs.debugmode = false
 		global_room = self.room
 		global_room:writeToConsole(version .. ", Powered by " .. _VERSION)
 		
@@ -1002,8 +1004,8 @@ sgs.ai_card_intention.general=function(from,to,level)
 end
 
 function sgs.outputRoleValues(player, level)
-	global_room:writeToConsole(player:getGeneralName() .. " " .. level .. " " .. sgs.evaluatePlayerRole(player) .." R" .. sgs.role_evaluation[player:objectName()]["rebel"] .. " L" ..
-		sgs.role_evaluation[player:objectName()]["loyalist"] .. " r" .. sgs.role_evaluation[player:objectName()]["renegade"]
+	global_room:writeToConsole(player:getGeneralName() .. " " .. level .. " " .. sgs.evaluatePlayerRole(player) .." R" .. math.ceil(sgs.role_evaluation[player:objectName()]["rebel"]) .. " L" ..
+		math.ceil(sgs.role_evaluation[player:objectName()]["loyalist"]) .. " r" .. math.ceil(sgs.role_evaluation[player:objectName()]["renegade"])
 		.. " " .. sgs.gameProcess(player:getRoom()) .. " " .. sgs.current_mode_players["loyalist"] .. sgs.current_mode_players["rebel"]
 		.. sgs.current_mode_players["renegade"]) 
 end
@@ -1094,7 +1096,7 @@ function sgs.outputProcessValues(room)
 
 end
 
-function sgs.gameProcess(room)
+function sgs.gameProcess(room,...)
 	local rebel_num = sgs.current_mode_players["rebel"]
 	local loyal_num = sgs.current_mode_players["loyalist"]
 	if rebel_num == 0 and loyal_num> 0 then return "loyalist"
@@ -1128,6 +1130,8 @@ function sgs.gameProcess(room)
 		end		
 	end
 	local diff = loyal_value - rebel_value
+
+    if #arg>0 and arg[1]==1 then return diff end
 
 	if diff >= 2 then
 		if health then return "loyalist"
@@ -1237,7 +1241,7 @@ function SmartAI:objectiveLevel(player)
                 if not players[i]:isLord() and self:hasSkills(renegade_attack_skill,players[i]) then return 5 end
                 if not players[i]:isLord() and math.abs(sgs.ai_chaofeng[players[i]:getGeneralName()] or 0) >=3 then return 5 end
             end
-            return players:isLord() and 0 or 3 
+            return player:isLord() and 0 or 3 
 		elseif process:match("rebel") then
 			if target_role == "rebel" then 
 				if process == "rebel" then return 5 else return 3 end			
@@ -1544,6 +1548,10 @@ function SmartAI:filterEvent(event, player, data)
 	if not sgs.recorder then
 		sgs.recorder = self
 	end
+    if player:objectName()==self.player:objectName() and sgs.ai_debug_func[event] and type(sgs.ai_debug_func[event])=="function" then
+        sgs.ai_debug_func[event](self,player,data)
+    end
+	
 	sgs.lastevent = event
 	sgs.lasteventdata = eventdata
 	if event == sgs.ChoiceMade and self == sgs.recorder then
@@ -1592,7 +1600,8 @@ function SmartAI:filterEvent(event, player, data)
 	end
 
 	if self ~= sgs.recorder then return end
-	
+
+
 	if event == sgs.CardEffect then
 		local struct = data:toCardEffect()
 		local card = struct.card
@@ -1657,7 +1666,7 @@ function SmartAI:filterEvent(event, player, data)
 			elseif type(callback) == "number" then
 				sgs.updateIntentions(from, to, callback, card)
 			end
-		end
+		end        
 	elseif event == sgs.CardsMoveOneTime then
 		local move = data:toMoveOneTime()
 		local from = move.from
@@ -1727,11 +1736,26 @@ function SmartAI:filterEvent(event, player, data)
 			if player:objectName() == caiwenji:objectName() then intention = 0 end
 			sgs.ai_card_intention.general(caiwenji, player, intention)
 		end
-	elseif event == sgs.EventPhaseStart and player:isLord() and player:getPhase()== sgs.Player_Finish then
-		sgs.turncount = sgs.turncount + 1
-		--self.room:writeToConsole(self.player:objectName() .. " " .. sgs.turncount)
-	elseif event == sgs.GameStart then
+	elseif event == sgs.EventPhaseStart and player:getPhase()== sgs.Player_Finish then
+		if player:isLord() then sgs.turncount = sgs.turncount + 1 end
+
+        sgs.debugmode = io.open("lua/ai/debug")
+        --[[
+        if sgs.turncount==1 and sgs.debugmode then            
+            for _, aplayer in sgs.qlist(self.room:getAllPlayers()) do
+                self.room:broadcastProperty(aplayer,"role")
+            end
+        end
+        ]]
+       
+
+	elseif event == sgs.GameStart then        
 		sgs.turncount = 0
+        sgs.debugmode = io.open("lua/ai/debug")
+        if player:isLord() and sgs.debugmode then
+            logmsg("<meta charset='utf-8'/>")
+        end
+
 	end
 end
 
@@ -2716,7 +2740,7 @@ function SmartAI:askForSinglePeach(dying)
 			end
 		end
 	end
-	return card_str or "."
+   	return card_str or "."
 end
 
 function SmartAI:getTurnUse()
