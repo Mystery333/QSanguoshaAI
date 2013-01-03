@@ -1549,7 +1549,7 @@ function SmartAI:filterEvent(event, player, data)
 	if not sgs.recorder then
 		sgs.recorder = self
 	end
-    if player:objectName()==self.player:objectName() and sgs.ai_debug_func[event] and type(sgs.ai_debug_func[event])=="function" then
+    if sgs.debugmode and player:objectName()==self.player:objectName() and sgs.ai_debug_func[event] and type(sgs.ai_debug_func[event])=="function" then
         sgs.ai_debug_func[event](self,player,data)
     end
 	
