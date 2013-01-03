@@ -129,7 +129,7 @@ sgs.ai_need_damaged.fankui = function (self, attacker)
 	end
 
 	local players = self.room:getOtherPlayers(self.player)
-    for _, player in ipairs(players) do
+    for _, player in sgs.qlist(players) do
         if player:containsTrick("lightning") and self:getFinalRetrial(player) ==1 and need_retrial(player) then
 			if not retrial_card.spade and attacker_card.spade then return attacker_card.spade end
 		end
