@@ -1639,6 +1639,11 @@ function SmartAI:filterEvent(event, player, data)
 			else
 				intention = 100 
 			end
+
+			if sgs.ai_ganglie_effect and sgs.ai_ganglie_effect ==string.format("%s_%s_%d",from:objectName(), to:objectName(),sgs.turncount)  then
+				sgs.ai_ganglie_effect = nil
+				intention = -30
+			end
 			
 			if from then sgs.updateIntention(from, to, intention) end
 		end
@@ -2075,8 +2080,14 @@ function SmartAI:askForCardChosen(who, flags, reason)
 			end
 		end
 	else
+		if flags:match("h") then
+			if (who:getHandcardNum()==1 or who:getHandcardNum()==2) and not self:hasSkills("kongcheng|lianying|shangshi",who) then
+				return self:getCardRandomly(who, "h")
+			end
+		end
+
 		if flags:match("e") then
-			if self:isEquip("Crossbow",who) and who:getWeapon() and getCardsNum("Slash", who) > 1 then
+			if self:isEquip("Crossbow",who) then
 				for _, friend in ipairs(self.friends) do
 					if who:distanceTo(friend) <= 1 then return who:getWeapon():getId() end
 				end

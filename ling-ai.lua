@@ -69,6 +69,8 @@ neofanjian_skill.getTurnUseCard=function(self)
 	self:sortByKeepValue(cards)
 	local card_id = cards[1]:getEffectiveId()
 
+	if cards[1]:isKindOf("Peach") or cards[1]:isKindOf("Analeptic") then return nil end
+
 	local card_str = "@NeoFanjianCard=" .. card_id
 	local fanjianCard = sgs.Card_Parse(card_str)
 	assert(fanjianCard)
@@ -138,7 +140,10 @@ sgs.ai_skill_invoke.neoganglie = function(self, data)
 		self.room:setPlayerFlag(target, "ganglie_target")
 		return true
     else
-        if self:getDamagedEffects(target,self.player) then return true end
+        if self:getDamagedEffects(target,self.player) then 
+			sgs.ai_ganglie_effect = string.format("%s_%s_%d",self.player:objectName(), target:objectName(),sgs.turncount) 
+			return true 
+		end
 	end
 	return false
 end

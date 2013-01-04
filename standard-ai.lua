@@ -56,6 +56,7 @@ sgs.ai_skill_invoke.fankui = function(self, data)
 	if sgs.ai_need_damaged.fankui(self, target) then return true end
 
     if self:isFriend(target) then
+		if self:getOverflow(target)>2 then return true end
         return (target:hasSkill("xiaoji") and not target:getEquips():isEmpty()) or (self:isEquip("SilverLion",target) and target:isWounded())
     end
     if self:isEnemy(target) then				---fankui without zhugeliang and luxun
@@ -177,7 +178,13 @@ sgs.ai_skill_invoke.ganglie = function(self, data)
     local mode = self.room:getMode()
     if mode:find("_mini_41") then return true end
     local who=data:toPlayer()
-    if self:getDamagedEffects(who,self.player) then return self:isFriend(who) end
+    if self:getDamagedEffects(who,self.player) then 
+		if self:isFriend(who) then
+			sgs.ai_ganglie_effect = string.format("%s_%s_%d",self.player:objectName(), who:objectName(),sgs.turncount) 
+			return true
+		end
+		return false
+	end
     return not self:isFriend(who)
 end
 
@@ -808,10 +815,11 @@ kurou_skill.getTurnUseCard=function(self,inclusive)
         (self.player:getHp() - self.player:getHandcardNum() >= 2) then
         return sgs.Card_Parse("@KurouCard=.")
     end
-
+	local slash = sgs.Sanguosha:cloneCard("slash", sgs.Card_NoSuit, 0)	
     if self.player:getWeapon() and self.player:getWeapon():isKindOf("Crossbow") then
         for _, enemy in ipairs(self.enemies) do
-            if self.player:canSlash(enemy, nil, true) and self.player:getHp()>1 then
+            if self.player:canSlash(enemy, nil, true) and self:slashIsEffective(slash, enemy) 
+				and (sgs.isGoodTarget(enemy) or #self.enemies==1) and not self:slashProhibit(slash, enemy) and self.player:getHp()>1 then
                 return sgs.Card_Parse("@KurouCard=.")
             end
         end
