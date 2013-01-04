@@ -1898,7 +1898,7 @@ function SmartAI:askForNullification(trick, from, to, positive)
 		return nil
 	end 
 
-	if not self:damageIsEffective(to,sgs.DamageStruct_Fire) and trick:isKindOf("FireAttack")) then
+	if not self:damageIsEffective(to,sgs.DamageStruct_Fire) and trick:isKindOf("FireAttack") then
 		return nil
 	end
 
@@ -2305,6 +2305,20 @@ function sgs.ai_cardneed.equip(to, card, self)
 		return card:getTypeId() == sgs.Card_Equip
 	end
 end
+
+
+function SmartAI:getEnemyNumBySeat(from, to)
+	local players = sgs.QList2Table(global_room:getAlivePlayers())
+	local to_seat = (to:getSeat() - from:getSeat()) % #players
+	local enemynum = 0
+	for _, p in ipairs(players) do
+		if self:isEnemy(from, p) and ((p:getSeat() - from:getSeat()) % #players) < to_seat then			 
+			enemynum = enemynum + 1 
+		end
+	end
+	return enemynum
+end
+
 
 function SmartAI:needKongcheng(player)
 	return (player:isKongcheng() and (player:hasSkill("kongcheng") or (player:hasSkill("zhiji") and player:getMark("zhiji") == 0))) or

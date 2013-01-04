@@ -287,7 +287,8 @@ end
 sgs.ai_card_intention.QiaobianCard = function(card, from, tos, source)
 	if from:getPhase() == sgs.Player_Draw then
 		for _, to in ipairs(tos) do
-			sgs.updateIntention(from, to, sgs.ai_card_intention.TuxiCard)
+			local intention = sgs.evaluateRoleTrends(from) == sgs.evaluateRoleTrends(to) and -5 or 80
+			sgs.updateIntention(from, to, intention)
 		end
 	end
 	return 0
