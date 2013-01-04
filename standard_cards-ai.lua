@@ -277,7 +277,7 @@ function SmartAI:useCardSlash(card, use)
         if (self.player:hasSkill("pojun") and friend:getHp() > 4 and getCardsNum("Jink", friend) == 0
             and friend:getHandcardNum() < 3)
 		or self:getDamagedEffects(friend,self.player) 
-        or (friend:hasSkill("leiji") and not self.player:hasFlag("luoyi")
+        or (friend:hasSkill("leiji") and not self.player:hasFlag("luoyi") and self:hasSuit("spade", true, friend) 
         and ( (getCardsNum("Jink", friend) > 0 and sgs.card_lack[player:objectName()]["Jink"] ~=1) or (not self:isWeak(friend) and self:isEquip("EightDiagram",friend)))
         and (hasExplicitRebel(self.room) or not friend:isLord()))
         or (friend:isLord() and self.player:hasSkill("guagu") and friend:getLostHp() >= 1 and getCardsNum("Jink", friend) == 0)

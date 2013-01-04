@@ -175,7 +175,7 @@ end
 
 sgs.ai_skill_use["@@leiji"]=function(self,prompt)
 	local mode = self.room:getMode()
-	if mode:find("mini") or mode:find("custom_scenario") then 
+	if mode:find("_mini_17") or mode:find("_mini_19") or mode:find("_mini_20") or mode:find("_mini_26") then 
 		local players = self.room:getAllPlayers();
 		for _,aplayer in sgs.qlist(players) do
 			if aplayer:getState() ~= "robot" then
