@@ -374,14 +374,14 @@ end
 sgs.ai_skill_playerchosen.zero_card_as_slash = function(self, targets)
     local slash = sgs.Sanguosha:cloneCard("slash", sgs.Card_NoSuit, 0)
     local targetlist=sgs.QList2Table(targets)
-    self:sort(targetlist, "defense")
+    self:sort(targetlist, "defenseSlash")
     for _, target in ipairs(targetlist) do
-        if self:isEnemy(target) and not self:slashProhibit(slash ,target) and self:slashIsEffective(slash,target) then
+        if self:isEnemy(target) and not self:slashProhibit(slash ,target) and self:slashIsEffective(slash,target) and sgs.isGoodTarget(target) then
             return target
         end
     end
     for i=#targetlist, 1, -1 do
-        if not self:slashProhibit(slash, targetlist[i]) then
+        if not self:slashProhibit(slash, targetlist[i]) and sgs.isGoodTarget(targetlist[i]) then
             return targetlist[i]
         end
     end
@@ -906,14 +906,18 @@ end
 function SmartAI:useCardDuel(duel, use)
     if self.player:hasSkill("wuyan") then return end
     if self.player:hasSkill("noswuyan") then return end
-    self:sort(self.enemies,"handcard")
+    self:sort(self.enemies,"defenseSlash")
     local enemies = self:exclude(self.enemies, duel)
     local friends = self:exclude(self.friends_noself, duel)
-    local target 
     local n1 = self:getCardsNum("Slash")
     local huatuo = self.room:findPlayerBySkillName("jijiu")
+
+	local canUseDuelTo=function(target)
+		return self:hasTrickEffective(duel, target) and self:damageIsEffective(target,sgs.DamageStruct_Normal) and not self.room:isProhibited(self.player, target, duel)
+	end
+
     for _, friend in ipairs(friends) do
-        if friend:hasSkill("jieming") and self.player:hasSkill("rende") and (huatuo and self:isFriend(huatuo))then
+        if friend:hasSkill("jieming") and canUseDuelTo(friend) and self.player:hasSkill("rende") and (huatuo and self:isFriend(huatuo))then
             use.card = duel
             if use.to then
                 use.to:append(friend)
@@ -921,66 +925,18 @@ function SmartAI:useCardDuel(duel, use)
             return
         end
     end
-    local ptarget = self:getPriorTarget()
-    if ptarget then
-        local target = ptarget
-        local n2 = getCardsNum("Slash",target)
-        local useduel
-        if target and self:objectiveLevel(target) > 3 and self:hasTrickEffective(duel, target) 
-            and not self.room:isProhibited(self.player, target, duel)
-                and not self:cantbeHurt(target) then
-            if n1 >= n2 then
-                useduel = true
-            elseif n2 > n1*2 + 1 then
-                useduel = false
-            elseif n1 > 0 then
-                local percard = 0.35
-                if target:hasSkill("paoxiao") or target:hasWeapon("Crossbow") then percard = 0.2 end
-                local poss = percard ^ n1 * (factorial(n1)/factorial(n2)/factorial(n1-n2))
-                if math.random() > poss then useduel = true end
-            end
-            if useduel then
-                use.card = duel
-                if use.to then
-                    use.to:append(target)
-                    self:speak("duel", self.player:isFemale())
-                end
-                return
-            end
-        end
-    end
-    local n2 
+	
     for _, enemy in ipairs(enemies) do
-        n2 = getCardsNum("Slash",enemy)
-        if self:objectiveLevel(enemy) > 3 then            
-            target = enemy
-            break
-        end
-    end
-    
-    local useduel
-    if target and self:objectiveLevel(target) > 3 and self:hasTrickEffective(duel, target) 
-        and not self.room:isProhibited(self.player, target, duel)
-            and not self:cantbeHurt(target) then
-        if n1 >= n2 then
-            useduel = true
-        elseif n2 > n1*2 + 1 then
-            useduel = false
-        elseif n1 > 0 then
-            local percard = 0.35
-            if target:hasSkill("paoxiao") or target:hasWeapon("Crossbow") then percard = 0.2 end
-            local poss = percard ^ n1 * (factorial(n1)/factorial(n2)/factorial(n1-n2))
-            if math.random() > poss then useduel = true end
-        end
-        if useduel then
+        if self:objectiveLevel(enemy) > 3 and canUseDuelTo(enemy) and not self:cantbeHurt(enemy) and sgs.isGoodTarget(enemy) and n1>=getCardsNum("Slash",enemy) then
             use.card = duel
             if use.to then
-                use.to:append(target)
+                use.to:append(enemy)
                 self:speak("duel", self.player:isFemale())
             end
             return
         end
-    end
+    end    
+    
 end
 
 sgs.ai_card_intention.Duel=function(card,from,tos,source)
