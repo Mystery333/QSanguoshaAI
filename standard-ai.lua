@@ -1085,6 +1085,12 @@ end
 sgs.ai_skill_use_func.JieyinCard=function(card,use,self)
     self:sort(self.friends_noself, "hp")
     local lord = self.room:getLord()
+	
+	-- only lord
+	if self:isFriend(lord) and lord:getMark("hunzi")==0 and lord:getMark("@waked")==0 and lord:hasSkill("hunzi") then
+		if self:getEnemyNumBySeat(self.player,lord) <= (lord:getHp()>=2 and 1 or 0) then return end
+	end
+
     if self:isFriend(lord) and not sgs.isLordHealthy()  and lord:isMale() and lord:isWounded() then
         use.card=card
         if use.to then use.to:append(lord) end
@@ -1151,6 +1157,13 @@ end
 
 sgs.ai_skill_use_func.QingnangCard=function(card,use,self)
     self:sort(self.friends, "defense")
+
+	-- only lord
+	local lord= self.room:getLord()
+	if self:isFriend(lord) and lord:getMark("hunzi")==0 and lord:getMark("@waked")==0 and lord:hasSkill("hunzi") and self:getCardsNum("Peach")>=2 then
+		return
+	end
+
     if self.player:isWounded() and self:getOverflow()>1 then 
         use.card=card
         if use.to then use.to:append(self.player) end
