@@ -46,6 +46,9 @@ sgs.ai_choicemade_filter.cardResponsed["@hujia-jink"] = function(player, promptl
 end
 
 sgs.ai_skill_cardask["@hujia-jink"] = function(self)
+	local yuanshu = self.room:findPlayerBySkillName("weidi")
+	if not sgs.hujiasource and not yuanshu then sgs.hujiasource = self.room:getLord() end
+	if not sgs.hujiasource then return "." end
     if not self:isFriend(sgs.hujiasource) then return "." end
     if self:needBear() then return "." end
     return self:getCardId("Jink") or "."
@@ -287,7 +290,7 @@ sgs.ai_skill_use["@@tuxi"] = function(self, prompt)
 
 	for i = 1, #self.enemies, 1 do
 		local p = self.enemies[i]
-		if self:hasSkills("jijiu|qingnang|jieyin|beige|kanpo|liuli|qiaobian|zhiheng|guidao|leiji|longhun|xuanfeng|tianxiang",p) then
+		if self:hasSkills("jijiu|qingnang|jieyin|beige|kanpo|liuli|qiaobian|zhiheng|guidao|leiji|longhun|xuanfeng|tianxiang|lijian",p) then
 			if add_player(p)==2  then return ("@TuxiCard=.->%s+%s"):format(targets[1], targets[2]) end
 		end
 	end
