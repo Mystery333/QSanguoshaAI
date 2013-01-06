@@ -194,7 +194,7 @@ end
 sgs.ai_need_damaged.ganglie = function (self, attacker)
 	if self:getDamagedEffects(attacker,self.player) then return self:isFriend(attacker) end
 	if self:isEnemy(attacker) and attacker:getHp() + attacker:getHandcardNum() <= 3 and 
-			not self:hasSkills(sgs.need_kongcheng.."|buqu", attacker) and sgs.isGoodTarget(attacker) then
+			not self:hasSkills(sgs.need_kongcheng.."|buqu", attacker) and sgs.isGoodTarget(attacker,self.enemies) then
 		return true
 	end
 	return false
@@ -875,7 +875,7 @@ kurou_skill.getTurnUseCard=function(self,inclusive)
     if self.player:getWeapon() and self.player:getWeapon():isKindOf("Crossbow") then
         for _, enemy in ipairs(self.enemies) do
             if self.player:canSlash(enemy, nil, true) and self:slashIsEffective(slash, enemy) 
-				and (sgs.isGoodTarget(enemy) or #self.enemies==1) and not self:slashProhibit(slash, enemy) and self.player:getHp()>1 then
+				and (sgs.isGoodTarget(enemy,self.enemies)) and not self:slashProhibit(slash, enemy) and self.player:getHp()>1 then
                 return sgs.Card_Parse("@KurouCard=.")
             end
         end

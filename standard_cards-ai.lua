@@ -21,10 +21,22 @@ function sgs.isGoodHp(player)
 	end
 end
 
-function sgs.isGoodTarget(player)
+function sgs.isGoodTarget(player,targets)
 	local arr = {"jieming","yiji","guixin","fangzhu","neoganglie","miji"}
 	local m_skill=false
 	local attacker = global_room:getCurrent()
+	
+	if targets and type(targets)=="table" then 
+		if #targets==1 then return true end
+		local foundtarget=false
+		for i = 1, #targets, 1 do
+			if sgs.isGoodTarget(targets[1]) then
+				foundtarget = true
+				break
+			end
+		end
+		if not foundtarget then return true end
+	end
 
 	if attacker:hasSkill("jueqing") then return true end
 
@@ -316,7 +328,9 @@ function SmartAI:useCardSlash(card, use)
     local targets = {}
 	self:sort(self.enemies, "defenseSlash")
     for _, enemy in ipairs(self.enemies) do
-        if not self:slashProhibit(card,enemy) then table.insert(targets, enemy) end
+        if not self:slashProhibit(card,enemy) and sgs.isGoodTarget(enemy,self.enemies) then 
+			table.insert(targets, enemy) 
+		end
     end
     
     for _, target in ipairs(targets) do
@@ -391,12 +405,12 @@ sgs.ai_skill_playerchosen.zero_card_as_slash = function(self, targets)
     local targetlist=sgs.QList2Table(targets)
     self:sort(targetlist, "defenseSlash")
     for _, target in ipairs(targetlist) do
-        if self:isEnemy(target) and not self:slashProhibit(slash ,target) and self:slashIsEffective(slash,target) and sgs.isGoodTarget(target) then
+        if self:isEnemy(target) and not self:slashProhibit(slash ,target) and self:slashIsEffective(slash,target) and sgs.isGoodTarget(target,targetlist) then
             return target
         end
     end
     for i=#targetlist, 1, -1 do
-        if not self:slashProhibit(slash, targetlist[i]) and sgs.isGoodTarget(targetlist[i]) then
+        if not self:slashProhibit(slash, targetlist[i]) and sgs.isGoodTarget(targetlist[i],targetlist) then
             return targetlist[i]
         end
     end
@@ -942,7 +956,7 @@ function SmartAI:useCardDuel(duel, use)
     end
 	
     for _, enemy in ipairs(enemies) do
-        if self:objectiveLevel(enemy) > 3 and canUseDuelTo(enemy) and not self:cantbeHurt(enemy) and sgs.isGoodTarget(enemy) and n1>=getCardsNum("Slash",enemy) then
+        if self:objectiveLevel(enemy) > 3 and canUseDuelTo(enemy) and not self:cantbeHurt(enemy) and n1>=getCardsNum("Slash",enemy) and sgs.isGoodTarget(enemy,enemies) then
             use.card = duel
             if use.to then
                 use.to:append(enemy)
