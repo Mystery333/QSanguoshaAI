@@ -414,17 +414,22 @@ sgs.ai_skill_discard.fangquan = function(self, discard_num, min_num, optional, i
 end
 
 sgs.ai_skill_playerchosen.fangquan = function(self, targets)
-	for _, target in sgs.qlist(targets) do
-		if self:isFriend(target) and not target:hasSkill("dawu") and
-			self:hasSkills(sgs.priority_skill,target) and not target:containsTrick("indulgence") then
+
+	self:sort(self.friends_noself, "handcard", true)
+
+	for _, target in ipairs(self.friends_noself) do
+		if not target:hasSkill("dawu") and self:hasSkills("yongsi|zhiheng|"..sgs.priority_skill.."|shensu",target) and not target:containsTrick("indulgence") then
 			return target
 		end
 	end
-	for _, target in sgs.qlist(targets) do
-		if self:isFriend(target) and not target:hasSkill("dawu") then
+
+	for _, target in ipairs(self.friends_noself) do
+		if not target:hasSkill("dawu") then
 			return target
 		end
 	end
+
+	return #self.friends_noself>0 and self.friends_noself[1]
 end
 
 sgs.ai_playerchosen_intention.fangquan = -40
