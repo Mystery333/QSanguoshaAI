@@ -152,6 +152,9 @@ function sgs.getDefenseSlash(player)
 	end
 
     if not player:faceUp() then defense = defense -0.35 end
+
+	if player:containsTrick("indulgence") and not player:containsTrick("YanxiaoCard") then defense = defense - 0.15  end
+	if player:containsTrick("supply_shortage") and not player:containsTrick("YanxiaoCard") then defense = defense - 0.15  end
 	
 	if not hasEightDiagram then
 		if player:hasSkill("jijiu") then defense = defense - 6 end
@@ -994,8 +997,8 @@ sgs.dynamic_value.benefit.ExNihilo = true
 
 function SmartAI:getDangerousCard(who)
     local weapon = who:getWeapon()
-    if (weapon and weapon:isKindOf("Crossbow") and getCardsNum("Slash",who)>1) then return  weapon:getEffectiveId() end
-    if (weapon and weapon:isKindOf("Spear") and who:hasSkill("paoxiao") and who:getHandcardNum()>1)  then return  weapon:getEffectiveId() end
+    if (weapon and weapon:isKindOf("Crossbow")) then return  weapon:getEffectiveId() end
+    if (weapon and weapon:isKindOf("Spear") and who:hasSkill("paoxiao") and who:getHandcardNum()>=1)  then return  weapon:getEffectiveId() end
     if (weapon and weapon:isKindOf("Axe") and self:hasSkills("luoyi|pojun|jiushi|jiuchi", who)) then return weapon:getEffectiveId() end
     if (who:getArmor() and who:getArmor():isKindOf("EightDiagram") and who:getArmor():getSuit() == sgs.Card_Spade and who:hasSkill("leiji")) then return who:getArmor():getEffectiveId() end
     if (weapon and weapon:isKindOf("SPMoonSpear") and self:hasSkills("guidao|chongzhen|guicai|jilve", who)) then return weapon:getEffectiveId() end
@@ -1017,11 +1020,7 @@ function SmartAI:getValuableCard(who)
     end
 
     if defhorse and not who:hasSkill("nosxuanfeng") then
-        for _,friend in ipairs(self.friends) do
-            if friend:distanceTo(who) == friend:getAttackRange()+1 then
-                return defhorse:getEffectiveId()
-            end
-        end
+		return defhorse:getEffectiveId()
     end
 
     if armor and self:evaluateArmor(armor,who)>3 and not who:hasSkill("nosxuanfeng") then
@@ -1140,6 +1139,38 @@ function SmartAI:useCardSnatchOrDismantlement(card, use)
             target = friend
         end
     end
+
+	for _, enemy in ipairs(enemies) do
+        if not enemy:isNude() and self:hasTrickEffective(card, enemy) then			
+            if self:hasSkills("jijiu|dimeng|guzheng|qiaobian|jieyin|lijian|beige",enemy) then
+				local cardchosen = self:getValuableCard(enemy)
+				local gethandcard
+				if cardchosen then
+					local card = sgs.Sanguosha:getCard(cardchosen)
+					local isDefenseCard = card:isKindOf("Armor") or card:isKindOf("DefensiveHorse")
+					if enemy:hasSkill("jijiu") and (not isDefenseCard or not card:isRed()) then
+						gethandcard = true
+					elseif enemy:hasSkill("beige") then
+						gethandcard = false
+					elseif not isDefenseCard then
+						gethandcard = true
+					end						
+				end
+
+				if not enemy:isKongcheng() and gethandcard then cardchosen = self:getCardRandomly(enemy, "h") end
+				if not cardchosen then cardchosen = self:getCardRandomly(enemy, "he") end
+				
+                use.card = card
+                if use.to then
+                    sgs.ai_skill_cardchosen[name] = cardchosen
+                    use.to:append(enemy)
+                    self:speak("hostile", self.player:isFemale())
+                end
+                return
+            end
+        end
+    end
+
 	
 	for i= 1,2,1 do
 		local targets={}
