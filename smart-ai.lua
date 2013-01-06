@@ -493,6 +493,15 @@ function SmartAI:getDynamicUsePriority(card)
 		elseif sgs.dynamic_value.lucky_chance[class_name] then
 			value = value + (#self.enemies - #self.friends)
 		end
+
+		if self.player:hasSkill("jieyin|qingnang|kuanggu") and use_card.card:isKindOf("Peach") then
+			value = 1.01 
+		end
+		--[[
+		if use_card:isKindOf("FireAttack") then
+			value = 10
+		end
+		]]
 	end
 
 	return value
@@ -4108,6 +4117,10 @@ end
 function SmartAI:needRende()
 	return self.player:hasSkill("rende") and self.player:getLostHp() > 1 
 		and self.player:usedTimes("RendeCard") < 2 and #self.friends > 1
+end
+
+function getBestHp(player)
+	local skills={ baiyin = 3, quhu = 2 ,ganlu =2 , yinghun=2 ,liegong=3, miji=2}
 end
 
 dofile "lua/ai/debug-ai.lua"
