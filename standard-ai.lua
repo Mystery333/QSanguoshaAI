@@ -523,14 +523,19 @@ end
 
 sgs.ai_skill_use_func.JijiangCard=function(card,use,self)
     self:sort(self.enemies, "defense")
+	
+	if not sgs.jijiangtarget then table.insert(sgs.ai_global_flags, "jijiangtarget") end
+	sgs.jijiangtarget = {}
+
     local target_count=0
     for _, enemy in ipairs(self.enemies) do
         if (self.player:canSlash(enemy, nil, not no_distance) or
             (use.isDummy and self.player:distanceTo(enemy)<=(self.predictedRange or self.player:getAttackRange())))
-            and self:objectiveLevel(enemy)>3 and self:slashIsEffective(card, enemy) then
+            and self:objectiveLevel(enemy)>3 and self:slashIsEffective(card, enemy) and sgs.isGoodTarget(enemy,self.enemies) then
             use.card=card
             if use.to then
                 use.to:append(enemy)
+				table.insert(sgs.jijiangtarget,enemy)
             end
             target_count=target_count+1
             if self.slash_targets<=target_count then return end
@@ -545,13 +550,41 @@ sgs.ai_choicemade_filter.cardResponsed["@jijiang-slash"] = function(player, prom
     if promptlist[#promptlist] ~= "_nil_" then
         sgs.updateIntention(player, sgs.jijiangsource, -40)
         sgs.jijiangsource = nil
+		sgs.jijiangtarget = nil
     end
 end
 
 sgs.ai_skill_cardask["@jijiang-slash"] = function(self)
     if not self:isFriend(sgs.jijiangsource) then return "." end
     if self:needBear() then return "." end
-    return self:getCardId("Slash") or "."
+    if not sgs.jijiangtarget or (sgs.jijiangtarget and #sgs.jijiangtarget==0) then
+		return self:getCardId("Slash") or "."
+	end
+	
+	--only deal with one target now
+	self:sort(sgs.jijiangtarget, "defense")
+	local target = sgs.jijiangtarget[1]
+
+	local cards = sgs.QList2Table(self.player:getCards("he"))
+	self:sortByUsePriority(cards,self.player)
+	
+	for i=1, #cards ,1 do
+		local card = cards[i]
+
+		local card_place = self.room:getCardPlace(card:getEffectiveId())
+		local card_str = getSkillViewCard(card, "Slash", self.player, card_place)
+
+		local carduse ={sgs.Card_Parse(card_str), card, sgs.Card_Parse(cardsView("Slash",player)) }
+		local cardstr ={card_str, card:getEffectiveId(), cardsView("Slash",player)}
+		
+		for j=1, #carduse, 1 do	
+			if carduse[j]:isKindOf("Slash") and not self:slashProhibit(carduse[j],target) and self:slashIsEffective(carduse[j], target) then
+				return cardstr[j]
+			end		
+		end
+
+	end
+	return "."
 end
 
 sgs.ai_chaofeng.liubei = -2
@@ -875,7 +908,7 @@ kurou_skill.getTurnUseCard=function(self,inclusive)
     if self.player:getWeapon() and self.player:getWeapon():isKindOf("Crossbow") then
         for _, enemy in ipairs(self.enemies) do
             if self.player:canSlash(enemy, nil, true) and self:slashIsEffective(slash, enemy) 
-				and (sgs.isGoodTarget(enemy,self.enemies)) and not self:slashProhibit(slash, enemy) and self.player:getHp()>1 then
+				and sgs.isGoodTarget(enemy,self.enemies) and not self:slashProhibit(slash, enemy) and self.player:getHp()>1 then
                 return sgs.Card_Parse("@KurouCard=.")
             end
         end
