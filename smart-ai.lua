@@ -3991,6 +3991,8 @@ function SmartAI:useEquipCard(card, use)
 		or (self:hasSkills("guose|longhun") and (card:getSuit() == sgs.Card_Diamond or same:getSuit() == sgs.Card_Diamond))
 		or (self:hasSkill("jijiu") and (card:isRed() or same:isRed())) then return end
 	end
+	local canUseSlash=self:getCardId("Slash") and self:slashIsAvailable(self.player)
+
 	self:useCardByClassName(card, use)
 	if use.card or use.broken then return end
 	if card:isKindOf("Weapon") then
@@ -4002,10 +4004,14 @@ function SmartAI:useEquipCard(card, use)
 			end
 		end
 		if self:hasSkills("paoxiao|fuhun",self.player) and card:isKindOf("Crossbow") then return end
+		
+		if not self:hasSkills(sgs.lose_equip_skill) and self:getOverflow()<=0 and not canUseSlash then return end
+
 		if self:evaluateWeapon(card) > self:evaluateWeapon(self.player:getWeapon()) then
 			if (not use.to) and self.weaponUsed and (not self:hasSkills(sgs.lose_equip_skill)) then return end
 			if self.player:getHandcardNum() <= self.player:getHp() then return end
 			use.card = card
+			return
 		end
 	elseif card:isKindOf("Armor") then
 			if self:needBear() and self.player:getLostHp() == 0 then return end
@@ -4029,7 +4035,7 @@ function SmartAI:useEquipCard(card, use)
 				if not friend:getOffensiveHorse() then return end
 			end
 		else
-			if self.player:getHandcardNum() <= self.player:getHp() and self:getCardsNum("Slash")+self:getCardsNum("Snatch") ==0 then 
+			if not self:hasSkills(sgs.lose_equip_skill) and self:getOverflow()<=0 and not (canUseSlash or self:getCardId("Snatch")) then 
 				return
 			else
 				if self.lua_ai:useCard(card) then 
