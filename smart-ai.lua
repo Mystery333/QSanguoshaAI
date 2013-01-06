@@ -563,7 +563,7 @@ sgs.ai_compare_funcs = {
 	end,
 
 	defense = function(a,b)
-		return sgs.getDefense(a) < sgs.getDefense(b)
+		return sgs.getDefenseSlash(a) < sgs.getDefenseSlash(b)
 	end,
 
 	threat = function (a, b)
@@ -1890,7 +1890,8 @@ function SmartAI:askForNullification(trick, from, to, positive)
 	if self:needBear() then return nil end
 	if self.player:hasSkill("wumou") and self.player:getMark("@wrath") < 6 then return nil end
 
-	if to:hasSkill("wuyan") and (trick:isKindOf("Duel") or trick:isKindOf("FireAttack") or trick:isKindOf("AOE")) then
+	if ( to:hasSkill("wuyan") or (self:getDamagedEffects(to) and self:isFriend(to)) )
+			and (trick:isKindOf("Duel") or trick:isKindOf("FireAttack") or trick:isKindOf("AOE")) then
 		return nil
 	end
 
@@ -1938,7 +1939,7 @@ function SmartAI:askForNullification(trick, from, to, positive)
 			if trick:isKindOf("AOE") and not (from:hasSkill("wuyan") and not (menghuo and trick:isKindOf("SavageAssault"))) then
 				local lord = self.room:getLord()
 				local currentplayer = self.room:getCurrent()
-				if self:isFriend(lord) and self:isWeak(lord) and self:aoeIsEffective(trick, lord)and 
+				if self:isFriend(lord) and self:isWeak(lord) and self:aoeIsEffective(trick, lord) and 
 					((lord:getSeat() - currentplayer:getSeat()) % (self.room:alivePlayerCount())) >
 					((to:getSeat() - currentplayer:getSeat()) % (self.room:alivePlayerCount()))	and not
 					(self.player:objectName() == to:objectName() and self.player:getHp() == 1 and not self:canAvoidAOE(trick)) then

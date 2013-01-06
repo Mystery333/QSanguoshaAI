@@ -71,7 +71,11 @@ function sgs.getDefenseSlash(player)
 	local attacker = global_room:getCurrent()
 	local defense = getCardsNum("Jink",player)
 
-	if sgs.card_lack[player:objectName()]["Jink"] == 1 then defense =0 end
+	local knownJink = getKnownCard(player,"Jink",true)
+
+	if sgs.card_lack[player:objectName()]["Jink"] == 1 and knownJink ==0 then defense =0 end
+	
+	defense= defense + knownJink * 1.2
 	
 	local hasEightDiagram=false
 	local ignoreArmor = attacker:hasUsed("WuqianCard") or attacker:hasWeapon("QinggangSword") or attacker:hasFlag("xianzhen_success")
@@ -148,12 +152,20 @@ function sgs.getDefenseSlash(player)
 	end
 
     if not player:faceUp() then defense = defense -0.35 end
-
-	if player:hasSkill("jijiu") then defense = defense -0.3 end
-	if player:hasSkill("dimeng") then defense = defense -0.28 end
-	if player:hasSkill("guzheng") then defense = defense -0.25 end
+	
+	if not hasEightDiagram then
+		if player:hasSkill("jijiu") then defense = defense - 6 end
+		if player:hasSkill("dimeng") then defense = defense - 5.5 end
+		if player:hasSkill("guzheng") and knownJink ==0 then defense = defense - 5.5 end
+		if player:hasSkill("qiaobian") then defense = defense - 5.4 end		
+		if player:hasSkill("jieyin") then defense = defense - 5.3 end
+		if player:hasSkill("lijian") then defense = defense - 5.2 end
+	end
 	return defense
 end
+
+
+
 
 sgs.ai_compare_funcs["defenseSlash"] = function(a,b)
 	return sgs.getDefenseSlash(a) < sgs.getDefenseSlash(b)
