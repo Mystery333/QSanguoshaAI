@@ -3190,20 +3190,22 @@ function SmartAI:getCardId(class_name, player)
 	local cards = player:getCards("he")
 	cards = sgs.QList2Table(cards)
 	self:sortByUsePriority(cards,player)
-	local card_str = self:getGuhuoCard(class_name, player) or cardsView(class_name, player)
-	if card_str then return card_str end
+	local guhuo_str = self:getGuhuoCard(class_name, player) 
+	if guhuo_str then return guhuo_str end
+
+	local viewas, cardid
 
 	for _, card in ipairs(cards) do
 		local card_place = self.room:getCardPlace(card:getEffectiveId())
-		if card:isKindOf(class_name) and not prohibitUseDirectly(card, player) then
-			return card:getEffectiveId()
+		viewas = getSkillViewCard(card, class_name, player, card_place)
+		if card:isKindOf(class_name) and not prohibitUseDirectly(card, player) then cardid=card:getEffectiveId() end
+
+		if viewas or cardid then
+			return self:hasSkills("chongzhen|wusheng|wushen", player) and (viewas or cardid) or (cardid or viewas)
 		end
 	end
-	for _, card in ipairs(cards) do
-		local card_place = self.room:getCardPlace(card:getEffectiveId())
-		card_str = getSkillViewCard(card, class_name, player, card_place)
-		if card_str then return card_str end
-	end
+
+	return cardsView(class_name, player)
 end
 
 function SmartAI:getCard(class_name, player)
