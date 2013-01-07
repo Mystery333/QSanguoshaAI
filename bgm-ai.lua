@@ -426,13 +426,25 @@ sgs.ai_skill_invoke.shichou = function(self, data)
 			end
 		end
 	end
+
+	if self.role=="rebel" and self.room:getLord():getKingdom()=="shu" then
+		return true
+	end
+
+	if shu ==0 then return false end
 	if first and shu > 1 then return false end
-	return true
+	if enemynum >0 then return true
+	return self:isWeak() and shu >0
 end
 
 sgs.ai_skill_playerchosen.shichou = function(self, targets)
 	targets = sgs.QList2Table(targets)
 	self:sort(targets, "hp", true)
+
+	if self.role=="rebel" and self.room:getLord():getKingdom()=="shu" then
+		return self.room:getLord()
+	end
+
 	for _, target in ipairs(targets) do
 		if target:hasSkill("wuhun") then 
 			return target 
@@ -440,6 +452,12 @@ sgs.ai_skill_playerchosen.shichou = function(self, targets)
 	end
 	for _, target in ipairs(targets) do
 		if self:isEnemy(target) then 
+			return target 
+		end 
+	end
+
+	for _, target in ipairs(targets) do
+		if self:hasSkills("zaiqi|nosenyuan|kuanggu|enyuan",target) and target:getHp()>=2 then 
 			return target 
 		end 
 	end
