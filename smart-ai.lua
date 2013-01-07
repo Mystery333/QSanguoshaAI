@@ -2142,13 +2142,13 @@ function SmartAI:askForCardChosen(who, flags, reason)
 	else
 		
 		if flags:match("e") and self:hasSkills("jijiu|dimeng|guzheng|qiaobian|jieyin|lijian|beige|miji",who) then
-			if who:getDefensiveHorse() then return who:getDefensiveHorse() end
-			if who:getArmor() then return who:getArmor() end
+			if who:getDefensiveHorse() then return who:getDefensiveHorse():getId() end
+			if who:getArmor() then return who:getArmor():getId() end
 			if who:getOffensiveHorse() and ( (who:getOffensiveHorse():isRed() and who:hasSkill("jijiu")) or who:hasSkill("beige") ) then
-				return who:getOffensiveHorse()
+				return who:getOffensiveHorse():getId()
 			end
 			if who:getWeapon() and ( (who:getWeapon():isRed() and who:hasSkill("jijiu")) or who:hasSkill("beige") ) then
-				return who:getWeapon()
+				return who:getWeapon():getId()
 			end
 		end
 	
