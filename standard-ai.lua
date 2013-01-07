@@ -290,7 +290,7 @@ sgs.ai_skill_use["@@tuxi"] = function(self, prompt)
 
 	for i = 1, #self.enemies, 1 do
 		local p = self.enemies[i]
-		if self:hasSkills("jijiu|qingnang|jieyin|beige|kanpo|liuli|qiaobian|zhiheng|guidao|leiji|longhun|xuanfeng|tianxiang|lijian",p) then
+		if self:hasSkills("jijiu|qingnang|leiji|jieyin|beige|kanpo|liuli|qiaobian|zhiheng|guidao|longhun|xuanfeng|tianxiang|lijian",p) then
 			if add_player(p)==2  then return ("@TuxiCard=.->%s+%s"):format(targets[1], targets[2]) end
 		end
 	end
@@ -564,6 +564,9 @@ sgs.ai_skill_cardask["@jijiang-slash"] = function(self)
 	--only deal with one target now
 	self:sort(sgs.jijiangtarget, "defense")
 	local target = sgs.jijiangtarget[1]
+
+	local ignoreArmor = sgs.jijiangsource:hasUsed("WuqianCard") or sgs.jijiangsource:hasWeapon("QinggangSword") or sgs.jijiangsource:hasFlag("xianzhen_success")
+	if ignoreArmor then return self:getCardId("Slash") or "." end
 
 	local cards = sgs.QList2Table(self.player:getCards("he"))
 	self:sortByUsePriority(cards,self.player)

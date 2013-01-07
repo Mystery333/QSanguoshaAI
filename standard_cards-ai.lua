@@ -25,12 +25,14 @@ function sgs.isGoodTarget(player,targets)
 	local arr = {"jieming","yiji","guixin","fangzhu","neoganglie","miji"}
 	local m_skill=false
 	local attacker = global_room:getCurrent()
+
+	if attacker:hasSkill("jueqing") then return true end
 	
 	if targets and type(targets)=="table" then 
 		if #targets==1 then return true end
 		local foundtarget=false
 		for i = 1, #targets, 1 do
-			if sgs.isGoodTarget(targets[1]) then
+			if sgs.isGoodTarget(targets[i]) then
 				foundtarget = true
 				break
 			end
@@ -38,12 +40,14 @@ function sgs.isGoodTarget(player,targets)
 		if not foundtarget then return true end
 	end
 
-	if attacker:hasSkill("jueqing") then return true end
-
 	for _, masochism in ipairs(arr) do
 		if player:hasSkill(masochism) then
-			m_skill=true
-			break
+			if masochism=="miji" and player:isWounded() then 
+				m_skill =false
+			else
+				m_skill=true
+				break
+			end
 		end
 	end
 		
@@ -163,6 +167,10 @@ function sgs.getDefenseSlash(player)
 		if sgs.isLordInDanger() then defense = defense - 0.7 end
 	end
 
+	if sgs.ai_chaofeng[player:getGeneralName()]>=3 then
+		defense = defense - math.max(6,sgs.ai_chaofeng[player:getGeneralName()]) * 0.035
+	end
+
     if not player:faceUp() then defense = defense -0.35 end
 
 	if player:containsTrick("indulgence") and not player:containsTrick("YanxiaoCard") then defense = defense - 0.15  end
@@ -175,6 +183,7 @@ function sgs.getDefenseSlash(player)
 		if player:hasSkill("qiaobian") then defense = defense - 5.4 end		
 		if player:hasSkill("jieyin") then defense = defense - 5.3 end
 		if player:hasSkill("lijian") then defense = defense - 5.2 end
+		if player:hasSkill("miji") and player:isWounded() then defense = defense - 3 end
 	end
 	return defense
 end
@@ -1156,7 +1165,7 @@ function SmartAI:useCardSnatchOrDismantlement(card, use)
 
 	for _, enemy in ipairs(enemies) do
         if not enemy:isNude() and self:hasTrickEffective(card, enemy) then			
-            if self:hasSkills("jijiu|dimeng|guzheng|qiaobian|jieyin|lijian|beige",enemy) then
+            if self:hasSkills("jijiu|dimeng|guzheng|qiaobian|jieyin|lijian|beige",enemy) or (enemy:hasSkill("miji") and enemy:isWounded()) then
 				local cardchosen = self:getValuableCard(enemy)
 				local gethandcard
 				if cardchosen then

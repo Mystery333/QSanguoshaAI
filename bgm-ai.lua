@@ -458,7 +458,12 @@ sgs.ai_need_damaged.shichou = function (self, attacker)
 			elseif sgs.compareRoleEvaluation(player, "rebel", "loyalist") == "rebel" then 
 				role="rebel"
 			end
-			if victim:isAlive() and role=="rebel" then
+			local need_damage = false
+			if (self.player:getRole()=="loyalist" or self.player:isLord()) and role=="rebel" then need_damage =true end
+			if self.player:getRole()=="rebel" and role~="rebel" then need_damage =true end
+			if self.player:getRole()=="renegade" then need_damage =true end
+
+			if victim:isAlive() and need_damage  then
 				return victim:hasSkill("wuhun") and 2 or 1
 			end			
 		end
