@@ -245,6 +245,7 @@ sgs.ai_skill_use["@@tuxi"] = function(self, prompt)
 	local jiangwei = self.room:findPlayerBySkillName("zhiji")
 	
 	local add_player = function (player,isfriend)
+		if player:getHandcardNum() ==0 then return #targets end
 		if #targets==0 then 
 			table.insert(targets, player:objectName())
 		elseif #targets==1 then			
@@ -287,7 +288,7 @@ sgs.ai_skill_use["@@tuxi"] = function(self, prompt)
 		local cards = sgs.QList2Table(p:getHandcards())
 		local flag = string.format("%s_%s_%s","visible",self.player:objectName(),p:objectName())
 		for _, card in ipairs(cards) do
-			if (card:hasFlag("visible") or card:hasFlag(flag)) and (card:isKindOf("Peach") or card:isKindOf("Nullification")) then
+			if (card:hasFlag("visible") or card:hasFlag(flag)) and (card:isKindOf("Peach") or card:isKindOf("Nullification") or card:isKindOf("Analeptic") ) then
 				if add_player(p)==2  then return ("@TuxiCard=.->%s+%s"):format(targets[1], targets[2]) end
 			end
 		end

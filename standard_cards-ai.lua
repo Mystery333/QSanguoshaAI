@@ -1137,7 +1137,8 @@ function SmartAI:useCardSnatchOrDismantlement(card, use)
     end
 
     for _, friend in ipairs(friends) do
-        if (friend:containsTrick("indulgence") or friend:containsTrick("supply_shortage")) and self:hasTrickEffective(card, friend) and not friend:hasSkill("qiaobian") then
+        if (friend:containsTrick("indulgence") or friend:containsTrick("supply_shortage")) and self:hasTrickEffective(card, friend) 
+				and not friend:hasSkill("qiaobian") and not friend:containsTrick("YanxiaoCard") then
             use.card = card
             if use.to then 
                 tricks = friend:getJudgingArea()
@@ -1156,12 +1157,29 @@ function SmartAI:useCardSnatchOrDismantlement(card, use)
 			
             return
         end
-        if self:isEquip("SilverLion", friend) and self:hasTrickEffective(card, friend) and 
-        friend:isWounded() and not self:hasSkills(sgs.use_lion_skill,friend) then
+        if self:isEquip("SilverLion", friend) and self:hasTrickEffective(card, friend) and friend:isWounded() and not self:hasSkills(sgs.use_lion_skill,friend) then
             hasLion = true
             target = friend
         end
     end
+
+	for _, enemy in ipairs(enemies) do
+		local cards = sgs.QList2Table(enemy:getHandcards())
+		local flag = string.format("%s_%s_%s","visible",self.player:objectName(),enemy:objectName())
+		if #cards <=2 and self:hasTrickEffective(card, enemy) and not enemy:isKongcheng() then
+			for _, cc in ipairs(cards) do
+				if (cc:hasFlag("visible") or cc:hasFlag(flag)) and (cc:isKindOf("Peach") or cc:isKindOf("Analeptic")) then
+					use.card = card
+					if use.to then
+						sgs.ai_skill_cardchosen[name] = self:getCardRandomly(enemy, "h")
+						use.to:append(enemy)
+						self:speak("hostile", self.player:isFemale())
+					end
+					return
+				end
+			end
+		end
+	end
 
 	for _, enemy in ipairs(enemies) do
         if not enemy:isNude() and self:hasTrickEffective(card, enemy) then			
@@ -1196,7 +1214,6 @@ function SmartAI:useCardSnatchOrDismantlement(card, use)
 
 	
 	for i= 1,2,1 do
-		local targets={}
 		for _, enemy in ipairs(enemies) do
 			if not enemy:isNude() and self:hasTrickEffective(card, enemy) and not self:needKongcheng(enemy) and not self:hasSkills("kongcheng|lianying|shangshi",enemy) then
 				if enemy:getHandcardNum() == i and sgs.getDefenseSlash(enemy)<3 and enemy:getHp()<=3 then
