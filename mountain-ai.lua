@@ -287,7 +287,7 @@ end
 sgs.ai_card_intention.QiaobianCard = function(card, from, tos, source)
 	if from:getPhase() == sgs.Player_Draw then
 		for _, to in ipairs(tos) do
-			local intention = sgs.evaluateRoleTrends(from) == sgs.evaluateRoleTrends(to) and -5 or 80
+			local intention = from:hasFlag("tuxi_isfriend_"..to:objectName()) and -5 or 80
 			sgs.updateIntention(from, to, intention)
 		end
 	end
