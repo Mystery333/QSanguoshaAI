@@ -236,7 +236,7 @@ end
 sgs.ai_chaofeng.xiahoudun = -3
 
 sgs.ai_skill_use["@@tuxi"] = function(self, prompt)
-    self:sort(self.enemies, "handcard")
+    self:sort(self.enemies, "handcard_defense")
 	local targets = {}
 
 	local zhugeliang = self.room:findPlayerBySkillName("kongcheng")
@@ -259,15 +259,19 @@ sgs.ai_skill_use["@@tuxi"] = function(self, prompt)
 		return #targets
 	end
 
+	if self.role == "role" and sgs.turncount ==1 and not self.room:getLord():isKongcheng() then
+		add_player(self.room:getLord())
+	end
+
 	if zhugeliang and self:isFriend(zhugeliang) and zhugeliang:getHandcardNum() == 1 and self:getEnemyNumBySeat(self.player,zhugeliang)>0 then
 		if zhugeliang:getHp() <=2 then  
-			add_player(zhugeliang,1)
+			if add_player(zhugeliang,1)==2 then return ("@TuxiCard=.->%s+%s"):format(targets[1], targets[2]) end
 		else
 			local flag = string.format("%s_%s_%s","visible",self.player:objectName(),zhugeliang:objectName())					
 			local cards = sgs.QList2Table(zhugeliang:getHandcards())
 			if #cards==1 and (cards[1]:hasFlag("visible") or cards[1]:hasFlag(flag)) then
 				if cards[1]:isKindOf("TrickCard") or cards[1]:isKindOf("Slash") or cards[1]:isKindOf("EquipCard") then
-					add_player(zhugeliang,1)
+					if add_player(zhugeliang,1)==2 then return ("@TuxiCard=.->%s+%s"):format(targets[1], targets[2]) end
 				end				
 			end
 		end
@@ -335,9 +339,15 @@ sgs.ai_skill_use["@@tuxi"] = function(self, prompt)
 end
 
 sgs.ai_card_intention.TuxiCard = function(card, from, tos, source)
+	local lord = from:getRoom():getLord()
+	local tuxi_lord = false
 	for _, to in ipairs(tos) do
+		if to:objectName() == lord:objectName() then tuxi_lord = true end
 		local intention = from:hasFlag("tuxi_isfriend_"..to:objectName()) and -5 or 80
 		sgs.updateIntention(from, to, intention)
+	end
+	if sgs.turncount ==1 and not tuxi_lord and not lord:isKongcheng() and not from:getRoom():alivePlayerCount() == 2 then 
+		sgs.updateIntention(from, lord, -80) 
 	end
 end
 

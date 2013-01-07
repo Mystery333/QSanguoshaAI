@@ -557,6 +557,16 @@ sgs.ai_compare_funcs = {
 		return a:getHandcardNum() < b:getHandcardNum()
 	end,
 
+	handcard_defense = function(a, b)
+		local c1 = a:getHandcardNum()
+		local c2 = b:getHandcardNum()
+		if c1 == c2 then
+			return  sgs.ai_compare_funcs.defense(a, b) 
+		else
+			return c1 < c2
+		end
+	end,
+
 	value = function(a, b)
 		return sgs.getValue(a) < sgs.getValue(b)
 	end,
