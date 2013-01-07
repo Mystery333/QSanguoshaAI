@@ -433,7 +433,7 @@ sgs.ai_skill_invoke.shichou = function(self, data)
 
 	if shu ==0 then return false end
 	if first and shu > 1 then return false end
-	if enemynum >0 then return true
+	if enemynum >0 then return true end
 	return self:isWeak() and shu >0
 end
 

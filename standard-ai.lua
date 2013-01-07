@@ -245,7 +245,7 @@ sgs.ai_skill_use["@@tuxi"] = function(self, prompt)
 	local jiangwei = self.room:findPlayerBySkillName("zhiji")
 	
 	local add_player = function (player,isfriend)
-		if player:getHandcardNum() ==0 then return #targets end
+		if player:getHandcardNum() ==0 or player:objectName()==self.player:objectName() then return #targets end
 		if #targets==0 then 
 			table.insert(targets, player:objectName())
 		elseif #targets==1 then			
@@ -316,9 +316,19 @@ sgs.ai_skill_use["@@tuxi"] = function(self, prompt)
 	end
 
 
-	if luxun and add_player(luxun,(self:isFriend(luxun) and 1 or nil))==2 then return ("@TuxiCard=.->%s+%s"):format(targets[1], targets[2]) end
+	if luxun and add_player(luxun,(self:isFriend(luxun) and 1 or nil))==2 then 
+		return ("@TuxiCard=.->%s+%s"):format(targets[1], targets[2]) 
+	end
+
 	if dengai and self:isFriend(dengai) and (not self:isWeak(dengai) or self:getEnemyNumBySeat(self.player,dengai)==0 ) and add_player(dengai,1)==2 then 
 		return ("@TuxiCard=.->%s+%s"):format(targets[1], targets[2]) 
+	end
+	
+    local others = self.room:getOtherPlayers(self.player)
+	for _, other in sgs.qlist(others) do
+		if self:objectiveLevel(other)>=0 and add_player(other)==2 then
+			return ("@TuxiCard=.->%s+%s"):format(targets[1], targets[2])
+		end
 	end
 
 	return "."
