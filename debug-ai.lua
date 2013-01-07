@@ -33,7 +33,7 @@ function debugFunc(self, room, player, data)
         if choice=="cancel" then break end
         if choice == "showVisiblecards" then
             debugmsg(" ")
-            debugmsg("=======================")
+            debugmsg("===================")
             debugmsg("查看已知牌; 当前AI是: %s[%s]",sgs.Sanguosha:translate(player:getGeneralName()),sgs.Sanguosha:translate(player:getRole()) )
             for i=1, #players, 1 do
                 local msg=string.format("%s已知牌:",sgs.Sanguosha:translate(players[i]:getGeneralName()))
@@ -49,7 +49,7 @@ function debugFunc(self, room, player, data)
         end
         if choice == "showHandcards" then
             debugmsg(" ")
-            debugmsg("=======================")
+            debugmsg("===================")
             debugmsg("查看手牌; 当前AI是: %s[%s]",sgs.Sanguosha:translate(player:getGeneralName()),sgs.Sanguosha:translate(player:getRole()) )
             for i=1, #players, 1 do
                 local msg=string.format("%s手牌:",sgs.Sanguosha:translate(players[i]:getGeneralName()))
@@ -62,7 +62,7 @@ function debugFunc(self, room, player, data)
         end
         if choice == "objectiveLevel" then
             debugmsg(" ")
-            debugmsg("================%s(%.1f)", sgs.gameProcess(room), sgs.gameProcess(room,1))
+            debugmsg("============%s(%.1f)", sgs.processvalue[sgs.gameProcess(room)], sgs.gameProcess(room,1))
             debugmsg("查看关系; 当前AI是: %s[%s]",sgs.Sanguosha:translate(player:getGeneralName()),sgs.Sanguosha:translate(player:getRole()) )
             for i=1, #players, 1 do
                 local level=self:objectiveLevel(players[i])
@@ -81,7 +81,7 @@ function debugFunc(self, room, player, data)
 
         if choice == "getDefenseSlash" then
             debugmsg(" ")
-            debugmsg("=======================")
+            debugmsg("===================")
             debugmsg("查看对杀的防御; 当前AI是: %s[%s]",sgs.Sanguosha:translate(player:getGeneralName()),sgs.Sanguosha:translate(player:getRole()) )
             for i=1, #players, 1 do
                 debugmsg("%s:%.2f",sgs.Sanguosha:translate(players[i]:getGeneralName()),sgs.getDefenseSlash(players[i]))                

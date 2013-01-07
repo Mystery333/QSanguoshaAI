@@ -167,7 +167,7 @@ function sgs.getDefenseSlash(player)
 		if sgs.isLordInDanger() then defense = defense - 0.7 end
 	end
 
-	if sgs.ai_chaofeng[player:getGeneralName()]>=3 then
+	if (sgs.ai_chaofeng[player:getGeneralName()] or 0)>=3 then
 		defense = defense - math.max(6,sgs.ai_chaofeng[player:getGeneralName()]) * 0.035
 	end
 
@@ -524,7 +524,7 @@ function SmartAI:useCardPeach(card, use)
 	end	
     
 	local lord= self.room:getLord()
-	if self:isFriend(lord) and lord:getHp() <= 2 and not lord:hasSkill("buqu") and peaches < 2 then 
+	if self:isFriend(lord) and lord:getHp() <= 2 and not lord:hasSkill("buqu") then 
 		if self.player:isLord() then use.card = card end
 		return 
 	end

@@ -67,6 +67,7 @@ sgs.ai_choicemade_filter = 	{
 sgs.card_lack =             {}
 sgs.ai_need_damaged =       {}
 sgs.ai_debug_func = 	    {}
+sgs.processvalue = {loyalist ="忠大优", dilemma="纠结", loyalish="忠小优" , rebelish="反小优", rebel="反大优",neutral= "平衡"}
 
 function setInitialTables()
 	sgs.current_mode_players = 	{loyalist = 0, rebel = 0, renegade = 0}
@@ -494,7 +495,7 @@ function SmartAI:getDynamicUsePriority(card)
 			value = value + (#self.enemies - #self.friends)
 		end
 
-		if self.player:hasSkill("jieyin|qingnang|kuanggu") and use_card.card:isKindOf("Peach") then
+		if self.player:hasSkill("jieyin|qingnang|kuanggu|xueji") and use_card.card:isKindOf("Peach") then
 			value = 1.01 
 		end
 		--[[
@@ -916,6 +917,10 @@ sgs.ai_card_intention.general=function(from,to,level)
 	--sgs.outputProcessValues(from:getRoom())
 	sgs.outputRoleValues(from, level)
 	
+	local loyalist_value=sgs.role_evaluation[from:objectName()]["loyalist"]
+	local rebel_value = sgs.role_evaluation[from:objectName()]["rebel"]
+	local renegade_value = sgs.role_evaluation[from:objectName()]["renegade"]
+	
 	if level > 0 then
 		if to:isLord() and sgs.current_mode_players["rebel"] == 0 then
 			sgs.role_evaluation[from:objectName()]["renegade"] = sgs.role_evaluation[from:objectName()]["renegade"] + level * 1.5
@@ -1005,6 +1010,39 @@ sgs.ai_card_intention.general=function(from,to,level)
 				sgs.role_evaluation[from:objectName()]["loyalist"] = sgs.role_evaluation[from:objectName()]["loyalist"] + level/3
 			end
 		end
+	end
+
+	local diffarr = {
+		add_loyalist_value	= sgs.role_evaluation[from:objectName()]["loyalist"] - loyalist_value ,
+		add_rebel_value		= sgs.role_evaluation[from:objectName()]["rebel"] - rebel_value ,
+		add_renegade_value	= sgs.role_evaluation[from:objectName()]["renegade"] - renegade_value ,
+	}
+
+	local value_changed = false
+	
+	for msgtype,diffvalue in pairs(diffarr) do
+		if diffvalue >0 then
+			value_changed = true
+			local log= sgs.LogMessage()
+			log.type = "#" .. msgtype
+			log.from = from
+			log.arg= math.ceil(diffvalue)
+			from:getRoom():sendLog(log)
+		end
+	end
+	
+	
+	if value_changed then
+		local log= sgs.LogMessage()
+		log.type = "#show_intention_value"
+		log.from = from
+		log.arg  = math.ceil(sgs.role_evaluation[from:objectName()]["loyalist"])
+		log.arg2 = math.ceil(sgs.role_evaluation[from:objectName()]["rebel"])
+		from:getRoom():sendLog(log)
+		from:speak(string.format("忠:%d,反:%d,内:%d",
+						sgs.role_evaluation[from:objectName()]["loyalist"],
+						sgs.role_evaluation[from:objectName()]["rebel"],
+						sgs.role_evaluation[from:objectName()]["renegade"]))
 	end
 
 	--sgs.outputProcessValues(from:getRoom())
@@ -1755,6 +1793,7 @@ function SmartAI:filterEvent(event, player, data)
 		if player:isLord() then sgs.turncount = sgs.turncount + 1 end
 
         sgs.debugmode = io.open("lua/ai/debug")
+		if (sgs.debugmode) then sgs.debugmode:close() end
         --[[
         if sgs.turncount==1 and sgs.debugmode then            
             for _, aplayer in sgs.qlist(self.room:getAllPlayers()) do
@@ -1767,6 +1806,7 @@ function SmartAI:filterEvent(event, player, data)
 	elseif event == sgs.GameStart then        
 		sgs.turncount = 0
         sgs.debugmode = io.open("lua/ai/debug")
+		if (sgs.debugmode) then sgs.debugmode:close() end
         if player:isLord() and sgs.debugmode then
             logmsg("<meta charset='utf-8'/>")
         end
