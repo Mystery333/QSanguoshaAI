@@ -484,7 +484,7 @@ sgs.ai_skill_use_func.RendeCard = function(card, use, self)
     self:sortByUseValue(cards,true)
     local name = self.player:objectName()
     local card, friend = self:getCardNeedPlayer(cards)
-    if card and friend then
+    if card and not card:isEquipped() and friend then
         use.card = sgs.Card_Parse("@RendeCard=" .. card:getId())
         if use.to then use.to:append(friend) end
         return
