@@ -469,8 +469,9 @@ sgs.ai_need_damaged.shichou = function (self, attacker)
 	local player=self.player
 	if player:hasLordSkill("shichou") and player:getMark("@hate")==0 then
 		if player:getTag("ShichouTarget") then
-			local victim = player:getTag("ShichouTarget"):toPlayer()
 			local role
+			local victim = player:getTag("ShichouTarget"):toPlayer()
+			if not victim then return false end			
 	        if sgs.isRolePredictable() and sgs.evaluatePlayerRole(player) == "rebel" then 
 				role="rebel" 
 			elseif sgs.compareRoleEvaluation(player, "rebel", "loyalist") == "rebel" then 

@@ -65,7 +65,7 @@ function sgs.isGoodTarget(player,targets)
 	end
 
 	if player:hasLordSkill("shichou") and player:getMark("@hate")==0 then
-		if player:getTag("ShichouTarget") and player:getTag("ShichouTarget"):toPlayer():isAlive() then
+		if player:getTag("ShichouTarget") and player:getTag("ShichouTarget"):toPlayer() and player:getTag("ShichouTarget"):toPlayer():isAlive() then
 			return false
 		end
 	end
@@ -314,7 +314,7 @@ function SmartAI:useCardSlash(card, use)
             and friend:getHandcardNum() < 3)
 		or self:getDamagedEffects(friend,self.player) 
         or (friend:hasSkill("leiji") and not self.player:hasFlag("luoyi") and self:hasSuit("spade", true, friend) 
-        and ( (getCardsNum("Jink", friend) > 0 and sgs.card_lack[player:objectName()]["Jink"] ~=1) or (not self:isWeak(friend) and self:isEquip("EightDiagram",friend)))
+        and ( (getCardsNum("Jink", friend) > 0 and sgs.card_lack[friend:objectName()]["Jink"] ~=1) or (not self:isWeak(friend) and self:isEquip("EightDiagram",friend)))
         and (hasExplicitRebel(self.room) or not friend:isLord()))
         or (friend:isLord() and self.player:hasSkill("guagu") and friend:getLostHp() >= 1 and getCardsNum("Jink", friend) == 0)
         or (friend:hasSkill("jieming") and self.player:hasSkill("rende") and (huatuo and self:isFriend(huatuo)))

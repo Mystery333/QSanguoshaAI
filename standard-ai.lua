@@ -259,7 +259,7 @@ sgs.ai_skill_use["@@tuxi"] = function(self, prompt)
 		return #targets
 	end
 
-	if self.role == "role" and sgs.turncount ==1 and not self.room:getLord():isKongcheng() then
+	if self.role == "rebel" and sgs.turncount ==1 and not self.room:getLord():isKongcheng() then
 		add_player(self.room:getLord())
 	end
 
