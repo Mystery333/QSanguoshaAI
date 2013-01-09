@@ -80,8 +80,10 @@ function sgs.ai_weapon_value.Fan(self, enemy)
 end
 
 function sgs.ai_armor_value.Vine(player, self)
-	if (self:needKongcheng(player) or player:hasSkill("lianying")) and player:getHandcardNum() == 1 then return 5 end
-	if self:hasSkills(sgs.lose_equip_skill, player) then return 5 end
+	if (self:needKongcheng(player) or player:hasSkill("lianying")) and player:getHandcardNum() == 1 then 
+		return player:hasSkill("kongcheng") and 5 or 3.8
+	end
+	if self:hasSkills(sgs.lose_equip_skill, player) then return 3.8 end
 
 	for _, enemy in ipairs(self:getEnemies(player)) do
 		if (enemy:canSlash(player) and self:isEquip("Fan",enemy)) or self:hasSkills("huoji|shaoying", enemy) then return -1 end
@@ -165,31 +167,44 @@ local function handcard_subtract_hp(a, b)
 end
 
 function SmartAI:useCardSupplyShortage(card, use)
-	table.sort(self.enemies, handcard_subtract_hp)
 	local enemies = self:exclude(self.enemies, card)
 
 	local zhanghe = self.room:findPlayerBySkillName("qiaobian")
 	local zhanghe_seat = zhanghe and zhanghe:faceUp() and self:isEnemy(zhanghe) and zhanghe:getSeat() or 0
 
-	for _, enemy in ipairs(enemies) do
-		if (self:hasSkills("yongsi|haoshi|tuxi", enemy) or (enemy:hasSkill("zaiqi") and enemy:getLostHp() > 1)) and not enemy:containsTrick("YanxiaoCard")
-				and	not enemy:containsTrick("supply_shortage") and enemy:faceUp() and self:objectiveLevel(enemy) > 3 and not self:hasSkills("qiaobian|shensu", enemy) then
-			if zhanghe_seat>0 and (enemy:getSeat() - zhanghe_seat) % self.room:alivePlayerCount() <= self.player:getSeat() then break	end
-			use.card = card
-			if use.to then use.to:append(enemy) end
+	if #enemies==0 then return end
 
-			return
-		end
+	local getvalue=function(enemy)
+		if enemy:containsTrick("supply_shortage") or enemy:containsTrick("YanxiaoCard") or self:hasSkills("qiaobian", enemy) then return -100 end
+		if zhanghe_seat>0 and (enemy:getSeat() - zhanghe_seat) % self.room:alivePlayerCount() <= self.player:getSeat() then return -100	end
+
+		local value = 0 - enemy:getHandcardNum()
+
+		if self:hasSkills("yongsi|haoshi|tuxi|lijian|fanjian|neofanjian|dimeng|jijiu|jieyin",enemy) or (enemy:hasSkill("zaiqi") and enemy:getLostHp() > 1)
+			then value = value + 10 
+		end		
+		if self:isWeak(enemy) then value = value + 5 end
+		if enemy:isLord() then value = value + 3 end
+
+		if self:objectiveLevel(enemy)<3 then value = value -10 end
+		if not enemy:faceUp() then value = value -10 end
+		if self:hasSkills("keji|shensu", enemy) then value = value - enemy:getHandcardNum() end
+		if self:hasSkills("guanxing|xiuluo|tiandu|guidao", enemy) then value = value - 5 end
+		if not sgs.isGoodTarget(enemy) then value = value - 1 end
+		return value
 	end
-	for _, enemy in ipairs(enemies) do
-		if ((#enemies == 1) or not self:hasSkills("tiandu|guidao|qiaobian|shensu",enemy)) and not enemy:containsTrick("YanxiaoCard")
-				and not enemy:containsTrick("supply_shortage") and enemy:faceUp() and self:objectiveLevel(enemy) > 3 then
-			if zhanghe_seat>0 and (enemy:getSeat() - zhanghe_seat) % self.room:alivePlayerCount() <= self.player:getSeat() then break	end
-			use.card = card
-			if use.to then use.to:append(enemy) end
 
-			return
-		end
+	local cmp = function(a,b)
+		return getvalue(a) > getvalue(b)
+	end
+
+	table.sort(enemies, cmp)
+
+	local target=enemies[1]
+	if getvalue(target) > -100 then
+		use.card = card
+		if use.to then use.to:append(target) end
+		return		
 	end
 end
 

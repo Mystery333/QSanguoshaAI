@@ -1170,8 +1170,11 @@ function sgs.gameProcess(room,...)
 			else rebel_hp = aplayer:getHp() end
 			if aplayer:getMaxHp() == 3 then rebel_value = rebel_value + 0.5 end
 			rebel_value = rebel_value + rebel_hp + math.max(sgs.getDefense(aplayer) - rebel_hp * 2, 0) * 0.7
-			if aplayer:getWeapon() and aplayer:getWeapon():getClassName() ~= "Weapon" then
-				rebel_value = rebel_value + math.min(1.2, math.min(sgs.weapon_range[aplayer:getWeapon():getClassName()],room:alivePlayerCount()/2)/2) * 0.4
+			if aplayer:getArmor() or (not aplayer:getArmor() and (aplayer:hasSkill("bazhen") or aplayer:hasSkill("yizhong"))) then
+				rebel_value = rebel_value + 0.5
+			end
+			if aplayer:getDefensiveHorse() then
+				rebel_value = rebel_value + 0.5
 			end
 			if aplayer:getMark("@duanchang")==1 and aplayer:getMaxHp() <=3 then rebel_value = rebel_value - 1 end
 		elseif role == "loyalist" or role == "lord" then
@@ -1182,6 +1185,12 @@ function sgs.gameProcess(room,...)
 			loyal_value = loyal_value + (loyal_hp + math.max(sgs.getDefense(aplayer) - loyal_hp * 2, 0) * 0.7)
 			if aplayer:getWeapon() and aplayer:getWeapon():getClassName() ~= "Weapon" then
 				loyal_value = loyal_value + math.min(1.2, math.min(sgs.weapon_range[aplayer:getWeapon():getClassName()],room:alivePlayerCount()/2)/2) * 0.4
+			end
+			if aplayer:getArmor() or (not aplayer:getArmor() and (aplayer:hasSkill("bazhen") or aplayer:hasSkill("yizhong"))) then
+				loyal_value = loyal_value + 0.5
+			end
+			if aplayer:getDefensiveHorse() then
+				loyal_value = loyal_value + 0.5
 			end
 			if aplayer:getMark("@duanchang")==1 and aplayer:getMaxHp() <=3 then loyal_value = loyal_value - 1 end
 		end		
@@ -1324,8 +1333,6 @@ function SmartAI:objectiveLevel(player)
 	
 	if self.player:isLord() or self.role == "loyalist" then
 		if player:isLord() then return -2 end
-		if process:match("rebel") and rebel_num>1 and target_role=='renegade' then return -1 end
-
         if #players>=4 and sgs.role_evaluation[player:objectName()]["rebel"] ==30 and sgs.role_evaluation[player:objectName()]["loyalist"] ==30 then return 0 end
       
 
@@ -1342,7 +1349,7 @@ function SmartAI:objectiveLevel(player)
 		end
 		if loyal_num == 0 then
 			if rebel_num > 2 then
-				if sgs.evaluatePlayerRole(player) == "renegade" then return -1 end
+				if target_role=='renegade' then return -1 end
 			elseif rebel_num > 1 then
 				if sgs.evaluatePlayerRole(player) == "renegade" then return 0 end
 			elseif sgs.evaluatePlayerRole(player) == "renegade" then return 4 end
@@ -1361,7 +1368,7 @@ function SmartAI:objectiveLevel(player)
 		elseif sgs.compareRoleEvaluation(player, "rebel", "loyalist") == "rebel" then return 3
 		else return 0 end
 	elseif self.role == "rebel" then
-		if process:match("loyalist") and loyal_num>0 and target_role=='renegade' then return -1 end
+		if process:match("loyalist") and loyal_num>rebel_num and target_role=='renegade' then return -1 end
          if #players>=4 and sgs.role_evaluation[player:objectName()]["rebel"] ==30 and sgs.role_evaluation[player:objectName()]["loyalist"] ==30 then return 0 end
       
         if player:isLord() then return 5

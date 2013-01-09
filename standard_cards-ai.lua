@@ -1220,7 +1220,9 @@ function SmartAI:useCardSnatchOrDismantlement(card, use)
                     local cardchosen
                     if self.player:distanceTo(enemy) == self.player:getAttackRange()+1 and enemy:getDefensiveHorse() then
                         cardchosen = enemy:getDefensiveHorse():getEffectiveId()
-                    else
+                    elseif self:isEquip("EightDiagram",enemy) then
+						cardchosen = enemy:getArmor():getEffectiveId()
+					else
                         cardchosen = self:getCardRandomly(enemy, "h")
                     end
 
@@ -1426,32 +1428,44 @@ local function hp_subtract_handcard(a,b)
 end
 
 function SmartAI:useCardIndulgence(card, use)
-    table.sort(self.enemies, hp_subtract_handcard)
     
     local enemies = self:exclude(self.enemies, card)
 
 	local zhanghe = self.room:findPlayerBySkillName("qiaobian")
 	local zhanghe_seat = zhanghe and zhanghe:faceUp() and self:isEnemy(zhanghe) and zhanghe:getSeat() or 0
 
-    for _, enemy in ipairs(enemies) do
-        if self:hasSkills("lijian|fanjian|neofanjian",enemy) and not enemy:containsTrick("indulgence") and not enemy:containsTrick("YanxiaoCard") 
-				and not self:hasSkills("qiaobian|keji|shensu", enemy) and not enemy:isKongcheng() and enemy:faceUp() and self:objectiveLevel(enemy) > 3 then
-			if zhanghe_seat>0 and (enemy:getSeat() - zhanghe_seat) % self.room:alivePlayerCount() <= self.player:getSeat() then break	end
-            use.card = card
-            if use.to then use.to:append(enemy) end
-            return
-        end
-    end
-    
-    for _, enemy in ipairs(enemies) do
-        if not enemy:containsTrick("indulgence") and not enemy:containsTrick("YanxiaoCard") and not self:hasSkills("qiaobian|keji|shensu", enemy) 
-				and enemy:faceUp() and self:objectiveLevel(enemy) > 3 then
-			if zhanghe_seat>0 and (enemy:getSeat() - zhanghe_seat) % self.room:alivePlayerCount() <= self.player:getSeat() then break	end
-			use.card = card
-			if use.to then use.to:append(enemy) end
-			return
-        end
-    end
+	if #enemies==0 then return end
+
+	local getvalue=function(enemy)
+		if enemy:containsTrick("indulgence") or enemy:containsTrick("YanxiaoCard") or self:hasSkills("qiaobian", enemy) then return -100 end
+		if zhanghe_seat>0 and (enemy:getSeat() - zhanghe_seat) % self.room:alivePlayerCount() <= self.player:getSeat() then return -100	end
+
+		local value = enemy:getHandcardNum() - enemy:getHp()
+
+		if self:hasSkills("lijian|fanjian|neofanjian|dimeng|jijiu|jieyin",enemy) then value = value + 10 end		
+		if self:isWeak(enemy) then value = value + 3 end
+		if enemy:isLord() then value = value + 3 end
+
+		if self:objectiveLevel(enemy)<3 then value = value -10 end
+		if not enemy:faceUp() then value = value -10 end
+		if self:hasSkills("keji|shensu", enemy) then value = value - enemy:getHandcardNum() end
+		if self:hasSkills("guanxing|xiuluo", enemy) then value = value - 5 end
+		if not sgs.isGoodTarget(enemy) then value = value - 1 end
+		return value
+	end
+
+	local cmp = function(a,b)
+		return getvalue(a) > getvalue(b)
+	end
+
+	table.sort(enemies, cmp)
+
+	local target=enemies[1]
+	if getvalue(target) > -100 then
+		use.card = card
+		if use.to then use.to:append(target) end
+		return		
+	end
 end
 
 sgs.ai_use_value.Indulgence = 8
