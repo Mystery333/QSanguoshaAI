@@ -1068,7 +1068,7 @@ function sgs.outputRoleValues(player, level)
 end
 
 function sgs.updateIntention(from, to, intention, card)
-	if not to then global_room:writeToConsole(debug.traceback()) end
+	if not to then global_room:writeToConsole(debug.traceback()) return end
 	if from:objectName() == to:objectName() then return end
 	
 	sgs.ai_card_intention.general(from, to, intention) 
