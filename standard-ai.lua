@@ -254,7 +254,7 @@ sgs.ai_skill_use["@@tuxi"] = function(self, prompt)
 			end
 		end
 		if isfriend and isfriend ==1 then
-			self.player:setFlag("tuxi_isfriend_"..player:objectName())
+			self.player:setFlags("tuxi_isfriend_"..player:objectName())
 		end
 		return #targets
 	end
