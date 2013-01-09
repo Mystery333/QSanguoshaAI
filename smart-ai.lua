@@ -1756,11 +1756,11 @@ function SmartAI:filterEvent(event, player, data)
 						if self:hasSkills(sgs.use_lion_skill, player) then 
 							intention = player:containsTrick("indulgence") and -intention or 0
 						else	
-							intention = player:isWeak() and  -intention  or -intention / 10 
+							intention = self:isWeak(player) and  -intention  or -intention / 10 
 						end
 					end
 					if self:hasSkills(sgs.lose_equip_skill, player) then 
-						if player:isWeak() and (card:iskindOf("DefensiveHorse") or card:isKindOf("Armor")) then
+						if self:isWeak(player) and (card:iskindOf("DefensiveHorse") or card:isKindOf("Armor")) then
 							intention=math.abs(intention)
 						else
 							intention = 0 
@@ -1953,7 +1953,7 @@ function SmartAI:askForNullification(trick, from, to, positive)
 	if self:needBear() then return nil end
 	if self.player:hasSkill("wumou") and self.player:getMark("@wrath") < 6 then return nil end
 
-	if ( to:hasSkill("wuyan") or (self:getDamagedEffects(to) and self:isFriend(to)) )
+	if ( to:hasSkill("wuyan") or ((self:getDamagedEffects(to) or to:getHp()>getBestHp(to)) and self:isFriend(to)) )
 			and (trick:isKindOf("Duel") or trick:isKindOf("FireAttack") or trick:isKindOf("AOE")) then
 		return nil
 	end
@@ -2254,7 +2254,7 @@ end
 function sgs.ai_skill_cardask.nullfilter(self, data, pattern, target)
 	if self.player:isDead() then return "." end
 	if not self:damageIsEffective(nil, nil, target) then return "." end
-	if self:getDamagedEffects(self.player,target) then return "." end
+	if self:getDamagedEffects(self.player,target) or self.player:getHp()>getBestHp(self.player) then return "." end
 	if target and target:getWeapon() and target:getWeapon():isKindOf("IceSword") and self.player:getCards("he"):length() > 2 then return end
 	if target and target:hasSkill("jueqing") then return end
 	if self:needBear() and self.player:getLostHp() < 2 then return "." end
@@ -4174,7 +4174,18 @@ function SmartAI:needRende()
 end
 
 function getBestHp(player)
-	local skills={ baiyin = 3, quhu = 2 ,ganlu =2 , yinghun=2 ,liegong=3, miji=2}
+	local arr={ baiyin = 1, quhu = 1 ,ganlu = 1 , yinghun= 2 ,liegong= 1, miji= 1}
+
+	if player:hasSkill("longhun") and player:getCards("he"):length()>2 then return 1 end
+
+	if player:getMark("@waked") > 0 then return player:getMaxHp() end
+
+	for skill,dec in pairs(arr) do
+		if player:hasSkill(skill) then 
+			return math.max( (player:isLord() and 3 or 2) ,player:getMaxHp() - dec)
+		end
+	end
+	return player:getMaxHp()
 end
 
 dofile "lua/ai/debug-ai.lua"
