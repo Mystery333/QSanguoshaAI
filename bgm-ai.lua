@@ -570,6 +570,7 @@ local yinling_skill={}
 yinling_skill.name="yinling"
 table.insert(sgs.ai_skills,yinling_skill)
 yinling_skill.getTurnUseCard=function(self,inclusive)
+	-- @todo combine it with the stratedy of using Dismantlement
     local cards = self.player:getCards("he")
     cards=sgs.QList2Table(cards)
     
@@ -713,7 +714,7 @@ end
 sgs.ai_skill_playerchosen.junwei = function(self, targets)
 	local tos = {}
 	for _, target in sgs.qlist(targets) do
-		if not self:isFriend(target) and not (self:isEquip("SilverLion", target) and target:getCards("e"):length() == 1)then
+		if self:isEnemy(target) and not (self:isEquip("SilverLion", target) and target:getCards("e"):length() == 1)then
 			table.insert(tos, target)
 		end
 	end 
