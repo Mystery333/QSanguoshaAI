@@ -1810,20 +1810,17 @@ function SmartAI:filterEvent(event, player, data)
 		if player:isLord() then sgs.turncount = sgs.turncount + 1 end
 
         sgs.debugmode = io.open("lua/ai/debug")
-		if (sgs.debugmode) then sgs.debugmode:close() end
-        --[[
+		if sgs.debugmode then sgs.debugmode:close() end
+        
         if sgs.turncount==1 and sgs.debugmode then            
             for _, aplayer in sgs.qlist(self.room:getAllPlayers()) do
                 self.room:broadcastProperty(aplayer,"role")
             end
         end
-        ]]
-       
-
 	elseif event == sgs.GameStart then        
 		sgs.turncount = 0
         sgs.debugmode = io.open("lua/ai/debug")
-		if (sgs.debugmode) then sgs.debugmode:close() end
+		if sgs.debugmode then sgs.debugmode:close() end
         if player:isLord() and sgs.debugmode then
             logmsg("<meta charset='utf-8'/>")
         end
