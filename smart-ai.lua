@@ -1733,7 +1733,7 @@ function SmartAI:filterEvent(event, player, data)
 	elseif event == sgs.CardsMoveOneTime then
 		local move = data:toMoveOneTime()
 		local from = move.from
-		for i = 1, move.card_ids:length() do
+		for i = 0, move.card_ids:length()-1 do
 			local place = move.from_places:at(i)
 			local card_id=move.card_ids:at(i)
 			local card = sgs.Sanguosha:getCard(card_id)
