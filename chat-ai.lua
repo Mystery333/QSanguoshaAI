@@ -70,7 +70,7 @@ sgs.ai_chat_func[sgs.Death]=function(self, player, data)
 				"还有更2的吗",
 				"对这个主，真的很无语",
 				}
-	if damage and damage.from and effect.from:isLord() and self.role=="loyalist" then
+	if damage and damage.from and damage.from:isLord() and self.role=="loyalist" then
 		local index =1+ (os.time() % #chat)
 		damage.to:speak(chat[index])
 	end
@@ -86,7 +86,7 @@ sgs.ai_chat_func[sgs.Dying]=function(self, player, data)
 				}
 	if (self.role=="rebel" or self.role=="loyalist") and sgs.current_mode_players["renegade"]>0 then
 		local index =1+ (os.time() % #chat)
-		damage.to:speak(chat[index])
+		player:speak(chat[index])
 	end
 end
 
