@@ -67,6 +67,7 @@ sgs.ai_choicemade_filter = 	{
 sgs.card_lack =             {}
 sgs.ai_need_damaged =       {}
 sgs.ai_debug_func = 	    {}
+sgs.ai_chat_func = 	    {}
 sgs.processvalue = {loyalist ="忠大优", dilemma="纠结", loyalish="忠小优" , rebelish="反小优", rebel="反大优",neutral= "平衡"}
 
 function setInitialTables()
@@ -1611,6 +1612,11 @@ function SmartAI:filterEvent(event, player, data)
         sgs.ai_debug_func[event](self,player,data)
     end
 	
+    if player:objectName()==self.player:objectName() and sgs.ai_chat_func[event] and type(sgs.ai_chat_func[event])=="function" then
+        sgs.ai_chat_func[event](self,player,data)
+    end
+
+
 	sgs.lastevent = event
 	sgs.lasteventdata = eventdata
 	if event == sgs.ChoiceMade and self == sgs.recorder then
@@ -1730,6 +1736,8 @@ function SmartAI:filterEvent(event, player, data)
 			elseif type(callback) == "number" then
 				sgs.updateIntentions(from, to, callback, card)
 			end
+		else
+			logmsg("card_intention.txt",card:getClassName())
 		end        
 	elseif event == sgs.CardsMoveOneTime then
 		local move = data:toMoveOneTime()
@@ -1806,7 +1814,7 @@ function SmartAI:filterEvent(event, player, data)
         sgs.debugmode = io.open("lua/ai/debug")
 		if sgs.debugmode then sgs.debugmode:close() end
         
-        if sgs.turncount==1 and sgs.debugmode then            
+        if sgs.turncount==1 then            
             for _, aplayer in sgs.qlist(self.room:getAllPlayers()) do
                 self.room:broadcastProperty(aplayer,"role")
             end
@@ -1816,7 +1824,7 @@ function SmartAI:filterEvent(event, player, data)
         sgs.debugmode = io.open("lua/ai/debug")
 		if sgs.debugmode then sgs.debugmode:close() end
         if player:isLord() and sgs.debugmode then
-            logmsg("<meta charset='utf-8'/>")
+            logmsg("ai.html","<meta charset='utf-8'/>")
         end
 
 	end

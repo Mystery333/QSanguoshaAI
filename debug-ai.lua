@@ -22,7 +22,7 @@ function debugFunc(self, room, player, data)
         if type(fmt)=="boolean" then fmt = fmt and "true" or "false" end
         local msg=string.format(fmt, unpack(arg))
         player:speak(msg)
-        logmsg("<pre>"..msg.."</pre>")
+        logmsg("ai.html","<pre>"..msg.."</pre>")
     end
 
 
@@ -92,8 +92,8 @@ function debugFunc(self, room, player, data)
 end
 
 
-function logmsg(fmt,...)
-	local fp = io.open("ai.html","ab")
+function logmsg(fname,fmt,...)
+	local fp = io.open(fname,"ab")
 	if type(fmt)=="boolean" then fmt = fmt and "true" or "false" end
 	fp:write(string.format(fmt, unpack(arg)).."\r\n")
 	fp:close()
