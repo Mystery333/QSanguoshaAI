@@ -247,6 +247,15 @@ function SmartAI:slashIsEffective(slash, to)
         return false
     end
 
+	if self:getWeapon() and card:getSubcards():first():getId()==self:getWeapon():getId() then
+		if self.player:distanceTo(to) - (sgs.weapon_range[card:getClassName()] or 1)< self.player:getAttackRange() then return false end
+	end
+
+	if self:getOffensiveHorse() and card:getSubcards():first():getId()==self:getOffensiveHorse():getId() then
+		if self.player:distanceTo(to) -1 < self.player:getAttackRange() then return false end
+	end
+
+
     local natures = {
         Slash = sgs.DamageStruct_Normal,
         FireSlash = sgs.DamageStruct_Fire,
@@ -569,7 +578,7 @@ sgs.ai_card_intention.Peach = -120
 
 sgs.ai_use_value.Peach = 6
 sgs.ai_keep_value.Peach = 5
-sgs.ai_use_priority.Peach = 4.1
+sgs.ai_use_priority.Peach = 1.1
 
 sgs.ai_use_value.Jink = 8.9
 sgs.ai_keep_value.Jink = 4
@@ -1448,7 +1457,7 @@ function SmartAI:useCardIndulgence(card, use)
 
 	local getvalue=function(enemy)
 		if enemy:containsTrick("indulgence") or enemy:containsTrick("YanxiaoCard") or self:hasSkills("qiaobian", enemy) then return -100 end
-		if zhanghe_seat>0 and (enemy:getSeat() - zhanghe_seat) % self.room:alivePlayerCount() <= self.player:getSeat() then return -100	end
+		if zhanghe_seat>0 and (enemy:getSeat() - zhanghe_seat) % self.room:alivePlayerCount() <= zhanghe_seat then return -100	end
 
 		local value = enemy:getHandcardNum() - enemy:getHp()
 
