@@ -406,7 +406,7 @@ sgs.ai_skill_cardask["@roulin2-jink-1"] = sgs.ai_skill_cardask["@wushuang-jink-1
 
 sgs.ai_skill_invoke.baonue = function(self, data)
 	for _,p in sgs.qlist(self.room:getOtherPlayers(self.player)) do
-		if p:hasLordSkill("baonue") and self:isFriend(p) and not p:hasFlag("baonueused") and p:isAlive() then
+		if p:hasLordSkill("baonue") and self:isFriend(p) and not p:hasFlag("baonueused") and p:isAlive() and p:isWounded() then
 			return true
 		end
 	end
