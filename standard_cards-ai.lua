@@ -509,7 +509,7 @@ function SmartAI:useCardPeach(card, use)
     if self.player:isLord() and (self.player:hasSkill("hunzi") and not self.player:hasSkill("yingzi")) 
         and self.player:getHp() < 4 and self.player:getHp() > peaches then return end
     for _, enemy in ipairs(self.enemies) do
-        if (self:hasSkills(sgs.drawpeach_skill,enemy) and self.player:getHandcardNum() < 3) or (self.player:hasSkill("buqu") and self.player:getHp() < 1) then
+        if (self:hasSkills(sgs.drawpeach_skill,enemy) and self.player:getHandcardNum() < 3) then
             mustusepeach = true
         end
     end
@@ -518,14 +518,16 @@ function SmartAI:useCardPeach(card, use)
 		return
 	end
 
-	if peaches > self.player:getHp() then mustusepeach = true end	
-
 	if mustusepeach or (self.player:hasSkill("buqu") and self.player:getHp()<1) or peaches > self.player:getHp() then
 		use.card = card
 		return 
 	end
 	
-	if self.player:hasSkill("jiuchi") and self:getCardsNum("Analeptic") > 0 and self:getOverflow() <=0 and #self.friends_noself>0 then
+	if self:getOverflow() <=0 and #self.friends_noself>0 then
+		return
+	end
+	
+	if self.player:hasSkill("kuanggu") and not self.player:hasSkill("jueqing") and self.player:getLostHp()==1 and self.player:getOffensiveHorse() then
 		return
 	end
 

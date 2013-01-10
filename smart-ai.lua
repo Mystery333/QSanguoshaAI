@@ -1170,9 +1170,6 @@ function sgs.gameProcess(room,...)
 			else rebel_hp = aplayer:getHp() end
 			if aplayer:getMaxHp() == 3 then rebel_value = rebel_value + 0.5 end
 			rebel_value = rebel_value + rebel_hp + math.max(sgs.getDefense(aplayer) - rebel_hp * 2, 0) * 0.7
-			if aplayer:getArmor() or (not aplayer:getArmor() and (aplayer:hasSkill("bazhen") or aplayer:hasSkill("yizhong"))) then
-				rebel_value = rebel_value + 0.5
-			end
 			if aplayer:getDefensiveHorse() then
 				rebel_value = rebel_value + 0.5
 			end
@@ -1185,9 +1182,6 @@ function sgs.gameProcess(room,...)
 			loyal_value = loyal_value + (loyal_hp + math.max(sgs.getDefense(aplayer) - loyal_hp * 2, 0) * 0.7)
 			if aplayer:getWeapon() and aplayer:getWeapon():getClassName() ~= "Weapon" then
 				loyal_value = loyal_value + math.min(1.2, math.min(sgs.weapon_range[aplayer:getWeapon():getClassName()],room:alivePlayerCount()/2)/2) * 0.4
-			end
-			if aplayer:getArmor() or (not aplayer:getArmor() and (aplayer:hasSkill("bazhen") or aplayer:hasSkill("yizhong"))) then
-				loyal_value = loyal_value + 0.5
 			end
 			if aplayer:getDefensiveHorse() then
 				loyal_value = loyal_value + 0.5
