@@ -593,6 +593,60 @@ end
 
 sgs.ai_card_intention.WuqianCard = 80
 
+function SmartAI:cansaveplayer(player)
+	player = player or self.player
+	local good = 0
+	if  self:hasSkills("jijiu|jiefan",player)  and player:getHandcardNum()>0  then
+		good = good + 0.5 
+	end
+	if player:hasSkill("chunlao") and player:getPile("wine"):length()>0 then
+		good = good + 1 
+	end
+	if player:hasSkill("buyi") then 
+		good = good +0.5
+	end
+	return good
+end
+
+function SmartAI:dangerousshenguanyu(player)
+	if not player then self.room:writeToConsole("Player is empty in isshenguanyu!") return end
+	local good = 0
+	if player:hasSkill("wuhun") and player:getHp() == 1 and #self.enemies>1 and sgs.turncount>1 then
+		local maxnightmare = 0
+		local nightmareplayer = {}
+		for _, ap in sgs.qlist(self.room:getAlivePlayers()) do
+			maxnightmare = math.max(ap:getMark("@nightmare"),maxnightmare)
+		end
+		if maxnightmare == 0 then return good end
+		for _, np in sgs.qlist(self.room:getAlivePlayers()) do
+			if np:getMark("@nightmare") == maxnightmare then
+				table.insert(nightmareplayer, np)
+			end
+		end
+		if #nightmareplayer == 0 then return good end
+		if self:isFriend(player) then
+		for _, p in ipairs(nightmareplayer) do
+				if self:isEnemy(p) and p:isLord() then good = good + 100 return good end
+			end
+			for _, p in ipairs(nightmareplayer) do
+				if self:isEnemy(p)  then good = good + 1.5 return good end
+			end
+			good = good - 5
+			return good
+		else
+			for _, p in ipairs(nightmareplayer) do
+				if self:isFriend(p) and p:isLord() then good = good - 100 return good end
+			end
+			for _, p in ipairs(nightmareplayer) do
+				if self:isFriend(p)  then	good = good - 1.5 return good end
+			end
+			good = good + 3
+			return good
+		end
+	end
+	return good
+end
+
 local shenfen_skill={}
 shenfen_skill.name = "shenfen"
 table.insert(sgs.ai_skills, shenfen_skill)
@@ -602,12 +656,84 @@ shenfen_skill.getTurnUseCard=function(self)
 end
 
 sgs.ai_skill_use_func.ShenfenCard=function(card,use,self)
-	if self:isFriend(self.room:getLord()) and self:isWeak(self.room:getLord()) and not self.player:isLord() then return end
-	use.card = card
+	-- if self:isFriend(self.room:getLord()) and self:isWeak(self.room:getLord()) and not self.player:isLord() then return end
+	local friendscards,enemiescards = 0,0
+	local good = #self.enemies - #self.friends_noself
+	
+	
+	if self:isEnemy(self.player:getNextAlive()) and self.player:getHp() >2 then good = good - 0.5 end
+	if self.player:getRole() == "rebel" then good = good +1 end	
+	if self.player:getRole() == "renegade" then good = good +0.5 end	
+	if not self.player:faceUp() then good = good +1 end
+	if self:hasSkills("jushou|neojushou|lihun|kuiwei|jiushi") then good = good + 1 end
+	
+	for _,p in sgs.qlist(self.room:getOtherPlayers(self.player)) do
+		good = good + self:dangerousshenguanyu(p)
+	end
+	
+	for _,friend in ipairs(self.friends_noself) do
+		if (friend:hasSkill("fangzhu") and friend:getHp() > 1) or 
+		(friend:hasSkill("jilve") and friend:getMark("@waked") >0 and friend:getMark("@bear") >0 and friend:getHp() > 1) then
+			good = good + friend:getLostHp()*0.5 + 0.5
+			break
+		end
+	end
+	
+	for _,friend in ipairs(self.friends_noself) do
+		if friend:hasSkill("jujian") then
+			good = good +0.5
+			break
+		end
+	end	
+	
+	for _,friend in ipairs(self.friends_noself) do
+		friendscards = friendscards + friend:getCardCount(true)
+		good = good + self:cansaveplayer(friend)
+		if friend:getRole() == "lord" then 
+			good = good - 1
+		end
+		if friend:getHp() == 1 and self:getAllPeachNum() < 1 then
+			if friend:getRole() == "lord" then
+				good = good - 100 
+			else 
+				good = good - 1 end
+		end	
+		if friend:getMark("@fog") >0 or friend:getMark("@fenyong")>0 then
+			good = good + 1
+		end
+		if friend:hasSkill("guixin") and friend:getHp()>1 then good = good + 1 end
+	end	
+	for _,enemy in ipairs(self.enemies) do
+		enemiescards = enemiescards + enemy:getCardCount(true)
+		good = good - self:cansaveplayer(enemy)
+		if enemy:getRole() == "lord" then
+			if self.player:getRole() == "rebel" then
+				good = good + 1
+			elseif self.player:getRole() == "renegade" then
+				good = good + 0.5
+			end
+		end
+		if enemy:getHp() == 1 then
+			if enemy:getRole() == "lord" and self.player:getRole() == "rebel" then
+				good = good + 5
+			elseif enemy:getRole() ~= "lord" then
+				good = good + 1 
+			end
+		end
+		if enemy:hasSkill("guixin") and enemy:getHp()>1 then good = good - 1 end
+		if enemy:getMark("@fog") >0 or enemy:getMark("@fenyong")>0 then
+			good = good - 1
+		end
+	end
+	good = good - (friendscards - enemiescards)/2
+	
+	self.room:writeToConsole("ShenfenCard:good is"..good)
+	if good >0 then use.card = card end
+	
 end
 
 sgs.ai_use_value.ShenfenCard = 8
-sgs.ai_use_priority.ShenfenCard = 2.3
+sgs.ai_use_priority.ShenfenCard = 4.2
 
 sgs.dynamic_value.damage_card.ShenfenCard = true
 sgs.dynamic_value.control_card.ShenfenCard = true
