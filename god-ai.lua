@@ -607,7 +607,7 @@ sgs.ai_skill_use_func.ShenfenCard=function(card,use,self)
 end
 
 sgs.ai_use_value.ShenfenCard = 8
-sgs.ai_use_priority.ShenfenCard = 2.3
+sgs.ai_use_priority.ShenfenCard = 9.3
 
 sgs.dynamic_value.damage_card.ShenfenCard = true
 sgs.dynamic_value.control_card.ShenfenCard = true
