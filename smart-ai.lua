@@ -3590,7 +3590,7 @@ function SmartAI:getSuitNum(suit_strings, include_equip, player)
 		allcards = include_equip and sgs.QList2Table(player:getEquips()) or {}
 		local handcards = sgs.QList2Table(player:getHandcards())
 		local flag=string.format("%s_%s_%s","visible",current:objectName(),player:objectName())
-		for i= 1, #handcards, 1
+		for i= 1, #handcards, 1 do
 			if handcards[i]:hasFlag("visible") or handcards[i]:hasFlag(flag) then
 				table.insert(allcards,handcards[i])
 			end
