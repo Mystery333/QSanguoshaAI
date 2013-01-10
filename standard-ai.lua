@@ -1289,9 +1289,9 @@ sgs.ai_skill_use_func.QingnangCard=function(card,use,self)
 	
 	if #arr1>0 and (self:isWeak(arr1[1]) or self:getOverflow()>=1) then target=arr1[1] end
 
-	if target and use.to then
+	if target then
 		use.card=card
-		use.to:append(target) 
+		if use.to then use.to:append(target) end 
 		return
 	end    
 end
