@@ -2429,8 +2429,16 @@ function SmartAI:getCardNeedPlayer(cards)
 			table.insert(friends, player)
 		end
 	end
-
-	for _,player in ipairs(friends) do
+	
+	for _,shenlvbu in ipairs(friends) do
+		if sgs.shenfensource and sgs.shenfensource:objectName() == shenlvbu:objectName() then
+			for _,shenlvbucard in ipairs(cards) do
+				return shenlvbucard, shenlvbu
+			end
+		end
+	end	
+	
+	for _,player in ipairs(friends) do		
 		if player:hasSkill("jieming") or player:hasSkill("jijiu") then
 			specialnum = specialnum + 1
 		end
@@ -3605,7 +3613,7 @@ function SmartAI:getSuitNum(suit_strings, include_equip, player)
 			if handcards[i]:hasFlag("visible") or handcards[i]:hasFlag(flag) then
 				table.insert(allcards,handcards[i])
 			end
-		do
+		end
 	end
 	for _, card in ipairs(allcards) do
 		for _, suit_string in ipairs(suit_strings:split("|")) do

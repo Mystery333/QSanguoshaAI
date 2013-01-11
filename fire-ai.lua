@@ -91,7 +91,15 @@ sgs.ai_skill_use["@@jieming"] = function(self, prompt)
 	self:sort(friends)
 	
 	local max_x = 0
-	local target
+	local target,shenlvbu
+	
+	for _, friend in ipairs(friends) do
+		if sgs.shenfensource and sgs.shenfensource:objectName() == friend:objectName() and math.min(friend:getMaxHp(), 5) - friend:getHandcardNum() > 0 then
+			shenlvbu = friend
+		end
+	end	
+	if shenlvbu then return "@JiemingCard=.->" .. shenlvbu:objectName() end
+	
 	for _, friend in ipairs(friends) do
 		local x = math.min(friend:getMaxHp(), 5) - friend:getHandcardNum()
 

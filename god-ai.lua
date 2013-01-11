@@ -591,6 +591,8 @@ sgs.ai_skill_use_func.WuqianCard=function(card,use,self)
 	end
 end
 
+sgs.ai_use_value.WuqianCard = 5
+sgs.ai_use_priority.WuqianCard = 2.5
 sgs.ai_card_intention.WuqianCard = 80
 
 function SmartAI:cansaveplayer(player)
@@ -651,12 +653,11 @@ local shenfen_skill={}
 shenfen_skill.name = "shenfen"
 table.insert(sgs.ai_skills, shenfen_skill)
 shenfen_skill.getTurnUseCard=function(self)
-	if self.player:hasUsed("ShenfenCard") or self.player:getMark("@wrath") < 6 then return end
+	if self.player:hasUsed("ShenfenCard") then return end
 	return sgs.Card_Parse("@ShenfenCard=.")
 end
 
 sgs.ai_skill_use_func.ShenfenCard=function(card,use,self)
-	-- if self:isFriend(self.room:getLord()) and self:isWeak(self.room:getLord()) and not self.player:isLord() then return end
 	local friendscards,enemiescards = 0,0
 	local good = #self.enemies - #self.friends_noself
 	
@@ -666,6 +667,7 @@ sgs.ai_skill_use_func.ShenfenCard=function(card,use,self)
 	if self.player:getRole() == "renegade" then good = good +0.5 end	
 	if not self.player:faceUp() then good = good +1 end
 	if self:hasSkills("jushou|neojushou|lihun|kuiwei|jiushi") then good = good + 1 end
+	if self.player:getWeapon() and self.player:getWeapon():isKindOf("Crossbow") and self:getCardsNum("Slash",self.player) > 1 then good = good +1 end
 	
 	for _,p in sgs.qlist(self.room:getOtherPlayers(self.player)) do
 		good = good + self:dangerousshenguanyu(p)
@@ -692,13 +694,13 @@ sgs.ai_skill_use_func.ShenfenCard=function(card,use,self)
 		if friend:getRole() == "lord" then 
 			good = good - 1
 		end
-		if friend:getHp() == 1 and self:getAllPeachNum() < 1 then
+		if self:isEquip("SilverLion", friend) and friend:getHp()>1 and friend:isWounded() then good = good +0.5 end
+		if friend:getHp() == 1 and friend:getMark("@fog") <1 and friend:getMark("@fenyong")<1 and self:getAllPeachNum() < 1 then
 			if friend:getRole() == "lord" then
 				good = good - 100 
 			else 
 				good = good - 1 end
-		end	
-		if friend:getMark("@fog") >0 or friend:getMark("@fenyong")>0 then
+		elseif friend:getMark("@fog") >0 or friend:getMark("@fenyong")>0 then
 			good = good + 1
 		end
 		if friend:hasSkill("guixin") and friend:getHp()>1 then good = good + 1 end
@@ -706,34 +708,44 @@ sgs.ai_skill_use_func.ShenfenCard=function(card,use,self)
 	for _,enemy in ipairs(self.enemies) do
 		enemiescards = enemiescards + enemy:getCardCount(true)
 		good = good - self:cansaveplayer(enemy)
-		if enemy:getRole() == "lord" then
-			if self.player:getRole() == "rebel" then
-				good = good + 1
-			elseif self.player:getRole() == "renegade" then
-				good = good + 0.5
-			end
+		if enemy:getRole() == "lord" and self.player:getRole() == "rebel" then
+			good = good + 1
 		end
-		if enemy:getHp() == 1 then
+		if enemy:getHp() == 1 and enemy:getMark("@fog") <1 and enemy:getMark("@fenyong")<1 then
 			if enemy:getRole() == "lord" and self.player:getRole() == "rebel" then
 				good = good + 5
 			elseif enemy:getRole() ~= "lord" then
 				good = good + 1 
 			end
-		end
-		if enemy:hasSkill("guixin") and enemy:getHp()>1 then good = good - 1 end
-		if enemy:getMark("@fog") >0 or enemy:getMark("@fenyong")>0 then
+		elseif enemy:getMark("@fog") >0 or enemy:getMark("@fenyong")>0 then
 			good = good - 1
 		end
+		if enemy:hasSkill("guixin") and enemy:getHp()>1 then good = good - 1 end
+		if enemy:hasSkill("ganglie") then good = good - 1 end
+		if enemy:hasSkill("xuehen") then good = good - 1 end
+		if self:isEquip("SilverLion", enemy) and enemy:getHp()>1 and enemy:isWounded() then good = good - 0.5 end
 	end
+	
 	good = good - (friendscards - enemiescards)/2
 	
-	self.room:writeToConsole("ShenfenCard:good is"..good)
-	if good >0 then use.card = card end
-	
+	self.player:speak("ShenfenCard:good is"..good)
+	if good >0 and self.player:getMark("@wrath") >5 then 
+		use.card = card		
+	end	
 end
+
+local shenfen_filter = function(player, carduse)
+    if carduse.card:isKindOf("ShenfenCard") then
+        sgs.shenfensource = player
+    end
+end
+table.insert(sgs.ai_choicemade_filter.cardUsed, shenfen_filter)
 
 sgs.ai_use_value.ShenfenCard = 8
 sgs.ai_use_priority.ShenfenCard = 4.2
+sgs.ai_card_intention.ShenfenCard = function(card, from, tos, source)
+	 sgs.shenfensource = nil
+end
 
 sgs.dynamic_value.damage_card.ShenfenCard = true
 sgs.dynamic_value.control_card.ShenfenCard = true
