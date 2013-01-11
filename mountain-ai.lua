@@ -98,9 +98,32 @@ sgs.ai_skill_discard.qiaobian = function(self, discard_num, min_num, optional, i
 	local cards = self.player:getHandcards()
 	cards = sgs.QList2Table(cards)
 	self:sortByUseValue(cards, true)
-	local card = cards[1]
+	local stealer = self.room:findPlayerBySkillName("tuxi")
+	local card
+	for i=1, #cards, 1 do
+		local isPeach = cards[i]:isKindOf("Peach")
+		if isPeach then
+			if stealer and self:isEnemy(stealer) and self.player:getHandcardNum()<=2 and not stealer:containsTrick("supply_shortage") then
+				card = cards[i]
+				break
+			end
+			local to_discard_peach = true
+			for _,fd in ipairs(self.friends) do
+				if fd:getHp()<=2 and not fd:hasSkill("niepan") then
+					to_discard_peach = false
+				end
+			end
+			if to_discard_peach then
+				card = cards[i]
+				break
+			end
+		else
+			card = cards[i]
+			break
+		end
+	end
+	if card==nil then return {} end
 	table.insert(to_discard, card:getEffectiveId())
-	if #to_discard < 1 then return {} end
 	current_phase = self.player:getMark("qiaobianPhase")
 	if current_phase == sgs.Player_Judge then
         if not self.player:containsTrick("YanxiaoCard") then
