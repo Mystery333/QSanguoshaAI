@@ -68,6 +68,7 @@ sgs.card_lack =             {}
 sgs.ai_need_damaged =       {}
 sgs.ai_debug_func = 	    {}
 sgs.ai_chat_func = 	    {}
+sgs.ai_event_callback = 	{}
 sgs.processvalue = {loyalist ="忠大优", dilemma="纠结", loyalish="忠小优" , rebelish="反小优", rebel="反大优",neutral= "平衡"}
 
 function setInitialTables()
@@ -1263,7 +1264,7 @@ function SmartAI:objectiveLevel(player)
 						end
 					elseif process:match("rebel") then
 						if target_role == "rebel" then 
-							if process == "rebel" then return 5 else return 3 end
+							return 5
 						else 
 							return -1 
 						end
@@ -1616,6 +1617,9 @@ function SmartAI:filterEvent(event, player, data)
         sgs.ai_chat_func[event](self,player,data)
     end
 
+    if player:objectName()==self.player:objectName() and sgs.ai_event_callback[event] and type(sgs.ai_event_callback[event])=="function" then
+        sgs.ai_event_callback[event](self,player,data)
+    end
 
 	sgs.lastevent = event
 	sgs.lasteventdata = eventdata
@@ -1827,6 +1831,13 @@ function SmartAI:filterEvent(event, player, data)
             logmsg("ai.html","<meta charset='utf-8'/>")
         end
 
+	end
+end
+
+sgs.ai_event_callback[sgs.ChoiceMade]=function(self,player,data)
+	local datastr= data:toString()	
+	if string.match(datastr,"cardResponsed")  and  string.match(datastr,"@fire%-attack") and string.match(datastr,"_nil_") then
+		player:setFlags("fireAttackFailed")
 	end
 end
 

@@ -8,6 +8,7 @@ end
 
 function sgs.isGoodHp(player)
 	local goodHp=player:getHp()>1 or getCardsNum("Peach",player)>=1 or getCardsNum("Analeptic",player)>=1 or player:hasSkill("buqu")
+				or (player:hasSkill("niepan") and player:getMark("@@nirvana") > 0)
 	if goodHp then 
 		return goodHp 
 	else
@@ -247,11 +248,11 @@ function SmartAI:slashIsEffective(slash, to)
         return false
     end
 
-	if self:getWeapon() and slash:getSubcards():first():getId()==self:getWeapon():getId() then
-		if self.player:distanceTo(to) - (sgs.weapon_range[self:getWeapon():getClassName()] or 1)< self.player:getAttackRange() then return false end
+	if self.player:getWeapon() and slash:getSubcards():first()==self.player:getWeapon():getId() then
+		if self.player:distanceTo(to) - (sgs.weapon_range[self.player:getWeapon():getClassName()] or 1)< self.player:getAttackRange() then return false end
 	end
 
-	if self:getOffensiveHorse() and slash:getSubcards():first():getId()==self:getOffensiveHorse():getId() then
+	if self.player:getOffensiveHorse() and slash:getSubcards():first()==self.player:getOffensiveHorse():getId() then
 		if self.player:distanceTo(to) -1 < self.player:getAttackRange() then return false end
 	end
 
