@@ -247,11 +247,11 @@ function SmartAI:slashIsEffective(slash, to)
         return false
     end
 
-	if self:getWeapon() and card:getSubcards():first():getId()==self:getWeapon():getId() then
-		if self.player:distanceTo(to) - (sgs.weapon_range[card:getClassName()] or 1)< self.player:getAttackRange() then return false end
+	if self:getWeapon() and slash:getSubcards():first():getId()==self:getWeapon():getId() then
+		if self.player:distanceTo(to) - (sgs.weapon_range[self:getWeapon():getClassName()] or 1)< self.player:getAttackRange() then return false end
 	end
 
-	if self:getOffensiveHorse() and card:getSubcards():first():getId()==self:getOffensiveHorse():getId() then
+	if self:getOffensiveHorse() and slash:getSubcards():first():getId()==self:getOffensiveHorse():getId() then
 		if self.player:distanceTo(to) -1 < self.player:getAttackRange() then return false end
 	end
 

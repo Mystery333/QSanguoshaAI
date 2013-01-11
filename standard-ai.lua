@@ -1163,6 +1163,7 @@ function SmartAI:getWoundedFriend(maleOnly)
 		local hp = p:getHp()
 		if p:isLord() and self:isWeak(p) then hp = hp - 10 end
 		if p:objectName()==self.player:objectName() and self:isWeak(p) and p:hasSkill("qingnang") then hp = hp - 5 end
+		if p:hasSkill("buqu") and p:getPile("buqu"):length()<=2 then hp = hp + 5 end
 		return hp
 	end
 
@@ -1175,7 +1176,7 @@ function SmartAI:getWoundedFriend(maleOnly)
 		end
 	end
 
-	for _, friend in ipairs(self.friends_noself) do
+	for _, friend in ipairs(self.friends) do
 		if friend:isLord() then
 			if friend:getMark("hunzi")==0 and friend:getMark("@waked")==0 and friend:hasSkill("hunzi") 
 					and self:getEnemyNumBySeat(self.player,friend) <= (friend:getHp()>=2 and 1 or 0) then
@@ -1189,8 +1190,7 @@ function SmartAI:getWoundedFriend(maleOnly)
 			if friend:getHp()>=getBestHp(friend) then
 				addToList(friend,2)
 			else
-				local index= friend:hasSkill("buqu") and friend:getPile("buqu"):length()<=2 and 2 or 1
-				addToList(friend, index)
+				addToList(friend,1)
 			end
 		end
 	end

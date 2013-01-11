@@ -236,12 +236,8 @@ end
 
 function SmartAI:isGoodChainPartner(player)  
     player = player or self.player
-	if player:getRole() == "lord" then
-		return false
-	end
-	if player:hasSkill("buqu") or (self:hasSkills("yiji|jieming|guixin",player) and player:getHp() > 1) or
-		(self.player:hasSkill("niepan") and self.player:getMark("@@nirvana") > 0) or 
-			player:hasSkill("fuli") and player:getMark("@laoji") > 0 then  
+	if player:hasSkill("buqu") or (self.player:hasSkill("niepan") and self.player:getMark("@@nirvana") > 0) or player:getHp() > getBestHp(player)
+			or self:getDamagedEffects(player) or (player:hasSkill("fuli") and player:getMark("@laoji") > 0) then  
 		return true
 	end
 	return false
@@ -252,20 +248,13 @@ function SmartAI:isGoodChainTarget(who)
 	local good = #(self:getChainedEnemies(self.player))
 	local bad = #(self:getChainedFriends(self.player))
 	for _, friend in ipairs(self:getChainedFriends(self.player)) do
-	    if friend:getRole() == "lord" then
-			return false
-		end
-		if friend:objectName() == self.player:objectName() and not self:isGoodChainPartner(self.player) then
-			return false
-		end
 		if self:cantbeHurt(friend) then
 			return false
 		end
 		if self:isGoodChainPartner(friend) then 
 			good = good+1 
-		end
-		if self:isWeak(friend) and not friend:hasSkill("buqu") then 
-			good = good-1 
+		elseif self:isWeak(friend) and not friend:hasSkill("buqu") then 
+			good = good-1
 		end
 	end
 	for _, enemy in ipairs(self:getChainedEnemies(self.player)) do
@@ -277,12 +266,11 @@ function SmartAI:isGoodChainTarget(who)
 		end
 		if self:isGoodChainPartner(enemy) then 
 			bad = bad+1 
-		end
-		if self:isWeak(enemy) and not enemy:hasSkill("buqu") then 
+		elseif self:isWeak(enemy) and not enemy:hasSkill("buqu") then
 			bad = bad-1 
 		end
 	end
-	return good > bad
+	return good > bad or (good==0 and bad==0)
 end
 
 
@@ -304,10 +292,14 @@ function SmartAI:useCardIronChain(card, use)
 	self:sort(self.enemies,"defense")
 	for _, enemy in ipairs(self.enemies) do
 		if not enemy:isChained() and not self.room:isProhibited(self.player, enemy, card) and not enemy:hasSkill("danlao")
-			and self:hasTrickEffective(card, enemy) and not (self:objectiveLevel(enemy) <= 3) then
+			and self:hasTrickEffective(card, enemy) and not (self:objectiveLevel(enemy) <= 3) 
+			and not self:getDamagedEffects(enemy) and not enemy:getHp() > getBestHp(enemy) and sgs.isGoodTarget(enemy,self.enemies) then
 			table.insert(enemytargets, enemy)
 		end
 	end
+
+	local chainSelf =(self.player:getHp() > getBestHp(self.player) or self:getDamagedEffects(self.player)) and not self.player:isChained()
+					and (self:getCardId("FireSlash") or self:getCardId("ThunderSlash") or (self:getCardId("FireAttack") and self:getHandcardNum()>2))
 	
 	if not self.player:hasSkill("noswuyan") then
 		if #friendtargets > 1 then
@@ -320,14 +312,22 @@ function SmartAI:useCardIronChain(card, use)
 			elseif yangxiu and self:isFriend(yangxiu) then
 				if use.to then use.to:append(friendtargets[1]) end
 				if use.to then use.to:append(yangxiu) end
+			elseif chainSelf then
+				if use.to then use.to:append(friendtargets[1]) end
+				if use.to then use.to:append(self.player) end
 			end
-		elseif #enemytargets > 1 then
-			if use.to then use.to:append(enemytargets[1]) end
-			if use.to then use.to:append(enemytargets[2]) end
-		elseif #friendtargets == 1 then
-			if yangxiu and self:isFriend(yangxiu) then
+		else
+			if #enemytargets > 1 then
 				if use.to then use.to:append(enemytargets[1]) end
-				if use.to then use.to:append(yangxiu) end
+				if chainSelf then
+					if use.to then use.to:append(self.player) end
+				else
+					if use.to then use.to:append(enemytargets[2]) end
+				end
+			elseif #enemytargets ==1 and chainSelf then
+				if use.to then use.to:append(enemytargets[1]) end
+				if use.to then use.to:append(self.player) end
+			else
 			end
 		end
 	end
