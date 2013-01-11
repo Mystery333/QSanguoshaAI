@@ -175,7 +175,7 @@ end
 sgs.ai_skill_use_func.AnxuCard=function(card,use,self)
 	local friends={}
 	for _,player in ipairs(self.friends_noself) do
-		if not player:hasSkill("manjuan") and (not player:hasSkill("kongcheng") and player:isKongcheng()) then
+		if not player:hasSkill("manjuan") and not(player:hasSkill("kongcheng") and player:isKongcheng()) then
 			table.insert(friends, player)
 		end
 	end
@@ -219,6 +219,7 @@ sgs.ai_skill_use_func.AnxuCard=function(card,use,self)
 	for _,enemy in ipairs(self.enemies) do
 		local hand1=enemy:getHandcardNum()
 		local hand2=much_enemy:getHandcardNum()
+		
 		if hand1 < hand2 and hand1 >= 1 and not (hand1==1 and self:needKongcheng(enemy)) and not (enemy:objectName()==much_enemy:objectName()) then
 			use.card=card
 			if use.to then
