@@ -497,14 +497,12 @@ function SmartAI:getDynamicUsePriority(card)
 			value = value + (#self.enemies - #self.friends)
 		end
 
-		if self.player:hasSkill("jieyin|qingnang|kuanggu|xueji") and use_card.card:isKindOf("Peach") then
-			value = 1.01 
-		end
-		--[[
-		if use_card:isKindOf("FireAttack") then
-			value = 10
-		end
-		]]
+		if use_card:isKindOf("DelayedTrick") or use_card:isKindOf("GodSalvation") then value = 1.01	end
+
+		if use_card:isKindOf("Peach") then value = 1.01 end		
+		if use_card:isKindOf("ShenfenCard") then  value = 10 end
+		if use_card:isKindOf("FireAttack") then value = 6 end
+
 	end
 
 	return value
@@ -1820,8 +1818,9 @@ function SmartAI:filterEvent(event, player, data)
         
         if sgs.turncount==1 then            
             for _, aplayer in sgs.qlist(self.room:getAllPlayers()) do
-                self.room:broadcastProperty(aplayer,"role")
+                self.room:broadcastProperty(aplayer,"role")				
             end
+			if player:isLord() then player:speak("为了调试方便，暂时对房主显示身份，AI之间并不会相互知道身份，这个调试功能不会影响AI身份判断。") end
         end
 	elseif event == sgs.GameStart then        
 		sgs.turncount = 0
@@ -2007,10 +2006,23 @@ function SmartAI:askForNullification(trick, from, to, positive)
 
 		if self:isFriend(to) then
 			if not (to:hasSkill("guanxing") and global_room:alivePlayerCount() > 4) then 
-				if (trick:isKindOf("Indulgence") and not to:hasSkill("tuxi")) or 
-					(trick:isKindOf("SupplyShortage") and not self:hasSkills("guidao|tiandu",to) and to:getMark("@kuiwei") == 0) then
+				
+				if trick:isKindOf("Indulgence") then
+					if to:hasSkill("tuxi") and to:getHp()>=2 then return nil end
+					if to:hasSkill("qiaobian") and not to:isKongcheng() then return nil end
+					if to:hasSkill("shensu") and not self:isWeak(to) then return nil end
 					return null_card
 				end
+
+				if trick:isKindOf("SupplyShortage") then
+					if self:hasSkills("guidao|tiandu",to) then return nil end
+					if to:getMark("@kuiwei") == 0 then return nil end
+					if to:hasSkill("qiaobian") and not to:isKongcheng() then return nil end
+					if to:hasSkill("shensu") and not self:isWeak(to) then return nil end
+					return null_card
+				end
+
+
 			end 
 			if trick:isKindOf("AOE") and not (from:hasSkill("wuyan") and not (menghuo and trick:isKindOf("SavageAssault"))) then
 				local lord = self.room:getLord()
@@ -2971,6 +2983,16 @@ function SmartAI:activate(use)
 	self:assignKeep(self.player:getHp(),true)
 	self.toUse  = self:getTurnUse()
 	self:sortByDynamicUsePriority(self.toUse)
+
+	local cards = self.toUse
+	local msg="优先级:"
+	for _, card in ipairs(cards) do
+		local item= card:getTypeId() == sgs.Card_Skill and card:getClassName() or card:getLogName()
+		msg = msg .. item ..", "
+	end
+	self.player:speak(msg)
+
+
 	for _, card in ipairs(self.toUse) do
 		if not self.player:isJilei(card) and not self.player:isLocked(card) then
 			local type = card:getTypeId()
