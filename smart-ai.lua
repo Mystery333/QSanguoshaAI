@@ -702,11 +702,304 @@ function SmartAI:sortByCardNeed(cards)
 
 	table.sort(cards, compare_func)
 end
-
+--[[下面两个模拟函数，仅设计，不参与实际计算]]--
+--[[
+	自定义函数：模拟单次伤害效果
+	参数：source（伤害来源）、victim（伤害目标）、card（伤害卡牌）、nature（伤害属性，按DamageStruct规定表示）
+	备注：没有考虑白银狮子的影响，在引用函数中自行处理。
+]]--
+function SmartAI:AtomDamageCount(source, victim, card, nature)
+	if not victim then --没有伤害目标则返回0
+		return 0
+	end
+	if not self:damageIsEffective(victim, nature, source) then --如果伤害无效则返回0
+		return 0 --（包括了对神君、大雾、水泳、愤勇的判断）
+	end
+	local isSlash = false --卡牌是否为杀的标志
+	local isNDTrick = false --卡牌是否为非延时性锦囊的标志
+	if card then
+		isSlash = card:isKindOf("Slash") 
+		isNDTrick = card:isNDTrick()
+	end
+	if victim:hasSkill("zhichi") then --如果目标有技能智迟
+		local tag = self.room:getTag("Zhichi")
+		if tag:toString() == victim:objectName() then --如果目标智迟中
+			if isSlash or isNDTrick then --如果卡牌为杀或非延时性锦囊
+				return 0
+			end
+		end
+	end
+	if victim:hasSkill("wuyan") or victim:hasSkill("noswuyan") then --如果目标有技能无言
+		if isNDTrick then --如果卡牌为非延时性锦囊
+			return 0
+		end
+	end
+	local damage = 1 --默认为一点伤害
+	if nature == sgs.DamageStruct_Fire then --如果是火焰伤害
+		local armor = victim:getArmor()
+		if armor then 
+			if armor:isKindOf("Vine") or armor:isKindOf("GaleShell") then --如果目标装备了藤甲或狂风甲
+				damage = damage + 1
+			end
+		end
+		if victim:getMark("@gale") then --如果目标有狂风标记
+			damage = damage + 1
+		end
+	end
+	if source then --如果有伤害来源
+		local weapon = source:getWeapon()
+		if weapon then
+			if weapon:isKindOf("GudingBlade") then --如果来源有古锭刀
+				if isSlash and victim:isKongcheng() then --如果卡牌为杀且目标空城
+					damage = damage + 1
+				end
+			end
+		end
+		if source:hasFlag("luoyi") then --如果来源有裸衣标志
+			if isSlash or card:isKindOf("Duel") then --如果卡牌为杀或决斗
+				damage = damage + 1
+			end
+		end
+		if isSlash then --如果卡牌为杀
+			if card:hasFlag("drank") then --如果卡牌为酒杀
+				damage = damage + 1
+			end
+			if source:hasSkill("jie") then --如果来源有技能疾恶
+				if card:isRed() then --如果是红杀
+					damage = damage + 1
+				end
+			end
+		end
+	end
+	return damage
+end
+--[[
+	自定义函数：模拟伤害效果（仅考虑等效伤害点数，也就是对敌方伤害点数与对己方伤害点数的差值）
+	参数：source（伤害来源，nil为无来源伤害）
+		victim（伤害目标，必须有）
+		card（伤害所用卡牌，nil为无卡牌伤害，如强袭等技能伤害）
+		damage_type（伤害类型："normal"为普通伤害，"fire"为火焰伤害，"thunder"为雷电伤害，"losehp"为体力流失， "recover"为体力回复）
+		chained（伤害目标是否被铁索连环，true表示被连环，false表示没有连环）
+]]--
+function SmartAI:DamageCount(source, victim, card, damage_type, chained)
+	if not victim then --没有伤害目标则返回0
+		return 0
+	end
+	if not damage_type then --默认为普通伤害
+		damage_type = "normal"
+	end
+	local count = 0
+	--确定伤害属性等信息
+	local isDamage = false
+	local nature = nil
+	if damage_type == "normal" then
+		isDamage = true
+		nature = sgs.DamageStruct_Normal
+	elseif damage_type == "fire" then
+		isDamage = true
+		nature = sgs.DamageStruct_Fire
+	elseif damage_type == "thunder" then
+		isDamage = true
+		nature = sgs.DamageStruct_Thunder
+	end
+	local factor = 1 --敌对系数
+	if source then
+		if isDamage and source:hasSkill("jueqing") then --如果来源有技能绝情
+			damage_type = "losehp"
+			isDamage = false
+			nature = sgs.DamageStruct_Normal
+		end
+		if isDamage and self:isFriend(victim, source) then --如果是己方
+			factor = -1
+		end
+	end
+	--伤害部分计算--
+	if isDamage then 
+		local shrink = false --伤害缩水标志
+		local armor = victim:getArmor()
+		if armor and armor:isKindOf("SilverLion") then --如果目标装备了白银狮子
+			shrink = true
+		end
+		if nature == sgs.Damage_Normal then --如果是普通伤害
+			count = self:AtomDamageCount(source, victim, card, nature)
+			if shrink and count > 1 then
+				count = 1
+			end
+			count = count * factor
+		else --如果是属性伤害
+			count = self:AtomDamageCount(source, victim, card, nature)
+			if shrink and count > 1 then
+				count = 1
+			end
+			count = count * factor
+			if chained then --如果目标被铁索连环
+				local targets = self.room:getOtherPlayers(victim)
+				for _,target in sgs.qlist(targets) do
+					if target:isChained() and target:isAlive() then
+						count = count + self:DamageCount(source, target, card, damage_type, false)
+					end
+				end
+			end
+		end
+	end
+	--体力流失部分计算--
+	if damage_type == "losehp" then 
+		count = self:AtomDamageCount(source, victim, card, nature)
+	end
+	--体力回复部分计算--
+	if damage_type == "recover" then 
+		if victim:hasLordSkill("jiuyuan") then --如果目标有主公技救援
+			if source:getKingdom() == "wu" then --如果来源为吴势力
+				if card and card:isKindOf("Peach") then --如果卡牌为桃
+					count = count + 1
+				end
+			end
+		end
+		local jxd = self.room:findPlayerBySkillName("wuling", false)
+		if jxd and jxd:getMark("water") > 0 then --如果当前是“五灵·水”场景
+			if card and card:isKindOf("Peach") then --如果卡牌为桃
+				count = count + 1
+			end
+		end
+	end
+	return count
+end
+--[[
+	获取的首要目标（完全不对啊！只有SmartAI:useCardDuel(duel, use)用到了这个函数！目前只是针对决斗的！）
+]]--
+--[[
 function SmartAI:getPriorTarget()
-	if #self.enemies == 0 then return end
-	self:sort(self.enemies, "defenseSlash")	
-	return self.enemies[1]	
+	if #self.enemies == 0 then return end --如果没有敌人则返回
+	--结果记录准备部分--
+	self:sort(self.enemies, "defenseSlash") --按防御杀的能力对敌人排序
+	local source = self.player --杀的来源：自己
+	local special_effects = {} --结果记录
+	for index=1, #self.enemies, 1 do --结果记录初始化
+		local value = 30 - index*4
+		table.insert(special_effects, value)
+	end
+	--火杀藤甲的特殊影响部分--
+	local allSlashCount = self:getCardsNum("slash", source, "he", true) --自己杀的数目
+	local fireSlashCount = self:getCardsNum("fire_slash", source, "he", true) --自己火杀的数目
+	local thunderSlashCount = self:getCardsNum("thunder_slash", source, "he", true) --自己雷杀的数目
+	local normalSlashCount = allSlashCount - fireSlashCount - thunderSlashCount --自己普通杀的数目
+	local haveNormalSlash = normalSlashCount > 0 --自己有普通杀
+	local fireAbility = false --纵火的能力
+	local weapon = source:getWeapon() --自己的武器
+	if weapon and weapon:isKindOf("Fan") then --如果装备了朱雀羽扇
+		fireAbility = fireAbility or haveNormalSlash
+	end
+	if source:hasSkill("lihuo") then --如果有技能疠火
+		fireAbility = fireAbility or haveNormalSlash
+	end
+	if source:hasSkill("zonghuo") then --如果有技能纵火
+		fireSlashCount = allSlashCount --更新火杀数目：所有杀都视为火杀
+		thunderSlashCount = 0 --更新雷杀数目：清零（其实这些数值目前没什么用，为了以后扩展方便而已。）
+		normalSlashCount = 0 --更新普通杀数目：清零
+	else
+		if fireAbility then --如果有纵火的能力
+			fireSlashCount = fireSlashCount + normalSlashCount --更新火杀数目：火杀＋普通杀视为火杀
+		end
+	end
+	if fireSlashCount > 0 then --如果自己有火杀
+		local virtualFireSlash = sgs.Sanguosha:cloneCard("fire_slash", sgs.Card_NoSuit, 0) --虚拟一张火杀
+		for index=1, #self.enemies, 1 do 
+			local enemy = self.enemies[index] --当前判断目标
+			local value = 0
+			if self:slashProhibit(virtualFireSlash, enemy) then --如果禁止使用火杀
+				value = -99
+			else 
+				local armor = enemy:getArmor() 
+				if armor then
+					if armor:isKindOf("Vine") or armor:isKindOf("GaleShell") then --如果目标装备了藤甲或狂风甲
+						value = value + 10
+					end
+				end
+				if enemy:getMark("@gale") > 0 then --如果目标有狂风标记
+					value = value + 4
+				end
+			end
+			special_effects[index] = special_effects[index] + value --更新结果记录
+		end
+	end
+	--免杀神关羽的特殊影响部分--（感觉这部分可以直接引用sgs.isGoodTarget(player)，算了还是自己写吧。）
+	for index=1, #self.enemies, 1 do
+		local enemy = self.enemies[index] --当前判断目标
+		local value = 0
+		if enemy:hasSkill("wuhun") then --如果目标有技能武魂
+			if source:isLord() or enemy:getHp() <= 2 then --如果自己是主公或者目标体力值较低
+				value = value -40
+			end
+		end
+		if enemy:hasSkill("huilei") and (enemy:getHp() == 1) then --如果目标有技能挥泪且体力为1点
+			if source:getHandcardNum() >= 4 then --如果自己手牌比较多
+				value = value -25
+			elseif sgs.compareRoleEvaluation(enemy, "rebel", "loyalist") == "rebel" then --如果目标像反贼
+				value = value + 5
+			end
+			if source:hasSkill("kongcheng") then --如果自己有技能空城
+				value = value + 3
+			end
+			if self:hasSkills(sgs.lose_equip_skill) then --如果自己有技能枭姬、旋风
+				value = value + 6
+			end
+		end
+		if enemy:hasSkill("duanchang") and (enemy:getHp() == 1) then --如果目标有技能断肠且体力为1点
+			if source:hasSkill("shiyong") then --如果自己有技能恃勇
+				value = value + 15
+			elseif source:hasSkill("benghuai") then --如果自己有技能崩坏
+				value = value + 5
+			elseif source:hasSkill("wumou") then --如果自己有技能无谋
+				value = value + 2
+			else
+				value = value - 30
+			end
+		end
+		special_effects[index] = special_effects[index] + value --更新结果记录
+	end
+	--伤害模拟测试区域--
+	for index=1, #self.enemies, 1 do
+		local enemy = self.enemies[index]
+		local count = 0
+		if fireSlashCount > 0 then
+			local fire_slash = sgs.Sanguosha:cloneCard("fire_slash", sgs.Card_Heart, 0)
+			count = self:DamageCount(source, enemy, fire_slash, "fire", enemy:isChained())
+		elseif thunderSlashCount > 0 then
+			local thunder_slash = sgs.Sanguosha:cloneCard("thunder_slash", sgs.Card_Spade, 0)
+			count = self:DamageCount(source, enemy, thunder_slash, "thunder", enemy:isChained())
+		else
+			local slash = sgs.Sanguosha:cloneCard("slash", sgs.Card_NoSuit, 0)
+			count = self:DamageCount(source, enemy, slash, "normal", false)
+		end
+		special_effects[index] = special_effects[index] + 3*count
+		--For Console:
+		--local name = self.enemies[index]:getGeneralName()
+		--local pt = count
+		--self.room:writeToConsole(string.format("(%d) player:%s special_effects:%d", index, name, pt))
+		--
+	end
+	--结果产生部分--
+	local maxvalue = -999
+	local target = nil
+	for index=1, #self.enemies, 1 do
+		if special_effects[index] > maxvalue then
+			maxvalue = special_effects[index]
+			target = self.enemies[index]
+		end
+		--For Console:
+		--local name = self.enemies[index]:getGeneralName()
+		--local pt = special_effects[index]
+		--self.room:writeToConsole(string.format("(%d) player:%s special_effects:%d", index, name, pt))
+		--
+	end
+	return target
+end
+]]--
+--恢复原貌--
+function SmartAI:getPriorTarget()
+	if #self.enemies == 0 then return end 
+	self:sort(self.enemies, "defense")
+	return self.enemies[1]
 end
 
 function sgs.evaluatePlayerRole(player)
@@ -1471,6 +1764,7 @@ function SmartAI:updateAlivePlayerRoles()
 		sgs.current_mode_players[arole] = 0
 	end
 	for _, aplayer in sgs.qlist(self.room:getOtherPlayers(self.room:getLord())) do
+		--[[小场景报错：attempt to perform arithmetic on field '?' (a nil value)]]--
 		sgs.current_mode_players[aplayer:getRole()] = sgs.current_mode_players[aplayer:getRole()] + 1
 	end
 	
@@ -3176,6 +3470,11 @@ function SmartAI:damageIsEffective(player, nature, source)
 	if player:hasSkill("ayshuiyong") and nature == sgs.DamageStruct_Fire then  --ecup
 		return false
 	end                                                                                                                  --ecup
+	
+	if player:hasSkill("fenyong") and player:getMark("@fenyong") > 0 then
+		return false --对已愤勇的☆SP夏侯惇伤害无效
+	end
+	
 	return true
 end
 

@@ -23,6 +23,76 @@ function sgs.ai_slash_prohibit.weidi(self, to, card)
 		end
 	end
 end
+--[[
+	技能：庸肆（弃牌部分）
+	备注：为了解决场上有古锭刀时弃白银狮子的问题而重写此弃牌方案。
+]]--
+sgs.ai_skill_discard.yongsi = function(self, discard_num, min_num, optional, include_equip)
+	self:assignKeep(self.player:getHp(),true)
+	if optional then 
+		return {} 
+	end
+	local flag = "h"
+	local equips = self.player:getEquips()
+	if include_equip and (equips:isEmpty() or not self.player:isJilei(equips:first())) then 
+		flag = flag .. "e" 
+	end
+	local cards = self.player:getCards(flag)
+	local to_discard = {}
+	cards = sgs.QList2Table(cards)
+	local aux_func = function(card)
+		local place = self.room:getCardPlace(card:getEffectiveId())
+		if place == sgs.Player_PlaceEquip then
+			if card:isKindOf("GaleShell") then return -2
+			elseif card:isKindOf("SilverLion") then
+				local players = self.room:getOtherPlayers(self.player) 
+				for _,p in sgs.qlist(players) do
+					local blade = p:getWeapon()
+					if blade and blade:isKindOf("GudingBlade") then
+						if p:inMyAttackRange(self.player) then
+							if self:isEnemy(p, self.player) then
+								return 6
+							end
+						else
+							break --因为只有一把古锭刀，检测到有人装备了，其他人就不会再装备了，此时可跳出检测。
+						end
+					end
+				end
+				if self.player:isWounded() then 
+					return -2
+				end
+			elseif card:isKindOf("OffensiveHorse") then return 1
+			elseif card:isKindOf("Weapon") then return 2
+			elseif card:isKindOf("DefensiveHorse") then return 3
+			elseif card:isKindOf("Armor") then 
+				return 4 
+			end
+		elseif self:hasSkills(sgs.lose_equip_skill) then 
+			return 5
+		else 
+			return 0 
+		end
+	end
+	local compare_func = function(a, b)
+		if aux_func(a) ~= aux_func(b) then return aux_func(a) < aux_func(b) end
+		return self:getKeepValue(a) < self:getKeepValue(b)
+	end
+
+	table.sort(cards, compare_func)
+	local least = min_num
+	if discard_num - min_num > 1 then
+		least = discard_num -1
+	end
+	for _, card in ipairs(cards) do
+		if (self.player:hasSkill("qinyin") and #to_discard >= least) or #to_discard >= discard_num then 
+			break 
+		end
+		if not self.player:isJilei(card) then 
+			table.insert(to_discard, card:getId()) 
+		end
+	end
+	return to_discard
+end
 
 sgs.ai_chaofeng.yuanshu = 3
 
