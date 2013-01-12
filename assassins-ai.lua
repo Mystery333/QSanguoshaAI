@@ -350,7 +350,7 @@ sgs.ai_skill_use["@@fengyin"] = function(self, data)
 	
 	local card_id = card:getEffectiveId()
 	
-	local target = room:getCurrent()
+	local target = self.room:getCurrent()
 	if self:isFriend(target) and target:containsTrick("indulgence") and target:getHandcardNum() + 2 > target:getHp() then
 		return "@FengyinCard="..card_id
 	end
