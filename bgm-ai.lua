@@ -139,7 +139,7 @@ sgs.ai_view_as.yanzheng = function(card, player, card_place)
 	local suit = card:getSuitString()
 	local number = card:getNumberString()
 	local card_id = card:getEffectiveId()
-	if card_place == sgs.Player_PlaceEquip then
+	if card_place == sgs.Player_PlaceEquip and player:getHandcardNum() > player:getHp() then
 	    return ("nullification:yanzheng[%s:%s]=%d"):format(suit, number, card_id)
 	end
 end
@@ -426,13 +426,25 @@ sgs.ai_skill_invoke.shichou = function(self, data)
 			end
 		end
 	end
+
+	if self.role=="rebel" and self.room:getLord():getKingdom()=="shu" then
+		return true
+	end
+
+	if shu ==0 then return false end
 	if first and shu > 1 then return false end
-	return true
+	if enemynum >0 then return true end
+	return self:isWeak() and shu >0
 end
 
 sgs.ai_skill_playerchosen.shichou = function(self, targets)
 	targets = sgs.QList2Table(targets)
 	self:sort(targets, "hp", true)
+
+	if self.role=="rebel" and self.room:getLord():getKingdom()=="shu" then
+		return self.room:getLord()
+	end
+
 	for _, target in ipairs(targets) do
 		if target:hasSkill("wuhun") then 
 			return target 
@@ -443,7 +455,39 @@ sgs.ai_skill_playerchosen.shichou = function(self, targets)
 			return target 
 		end 
 	end
+
+	for _, target in ipairs(targets) do
+		if self:hasSkills("zaiqi|nosenyuan|kuanggu|enyuan",target) and target:getHp()>=2 then 
+			return target 
+		end 
+	end
 	return targets[1]
+end
+
+
+sgs.ai_need_damaged.shichou = function (self, attacker)
+	local player=self.player
+	if player:hasLordSkill("shichou") and player:getMark("@hate")==0 then
+		if player:getTag("ShichouTarget") then
+			local role
+			local victim = player:getTag("ShichouTarget"):toPlayer()
+			if not victim then return false end			
+	        if sgs.isRolePredictable() and sgs.evaluatePlayerRole(player) == "rebel" then 
+				role="rebel" 
+			elseif sgs.compareRoleEvaluation(player, "rebel", "loyalist") == "rebel" then 
+				role="rebel"
+			end
+			local need_damage = false
+			if (self.player:getRole()=="loyalist" or self.player:isLord()) and role=="rebel" then need_damage =true end
+			if self.player:getRole()=="rebel" and role~="rebel" then need_damage =true end
+			if self.player:getRole()=="renegade" then need_damage =true end
+
+			if victim:isAlive() and need_damage  then
+				return victim:hasSkill("wuhun") and 2 or 1
+			end			
+		end
+	end
+	return false
 end
 
 sgs.ai_skill_discard.shichou = sgs.ai_skill_discard.lihun
@@ -526,6 +570,7 @@ local yinling_skill={}
 yinling_skill.name="yinling"
 table.insert(sgs.ai_skills,yinling_skill)
 yinling_skill.getTurnUseCard=function(self,inclusive)
+	-- @todo combine it with the stratedy of using Dismantlement
     local cards = self.player:getCards("he")
     cards=sgs.QList2Table(cards)
     
@@ -669,7 +714,7 @@ end
 sgs.ai_skill_playerchosen.junwei = function(self, targets)
 	local tos = {}
 	for _, target in sgs.qlist(targets) do
-		if not self:isFriend(target) and not (self:isEquip("SilverLion", target) and target:getCards("e"):length() == 1)then
+		if self:isEnemy(target) and not (self:isEquip("SilverLion", target) and target:getCards("e"):length() == 1)then
 			table.insert(tos, target)
 		end
 	end 
@@ -724,6 +769,11 @@ sgs.bgm_ganning_suit_value =
 sgs.ai_skill_invoke.fenyong = function(self, data)
 	return true
 end
+
+function sgs.ai_slash_prohibit.fenyong(self, to)
+	return to:getMark("@fenyong") >0 and to:hasSkill("fenyong")
+end
+
 
 sgs.ai_skill_choice.xuehen = function(self, choices)
 	local current = self.room:getCurrent();

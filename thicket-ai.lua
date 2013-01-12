@@ -4,11 +4,15 @@ sgs.ai_skill_use["@@fangzhu"] = function(self, prompt)
 	self:sort(self.friends_noself)
 	local target
 	for _, friend in ipairs(self.friends_noself) do
+		if friend:hasUsed("ShenfenCard") and friend:faceUp() and friend:getPhase() == sgs.Player_Play and sgs.shenfensource and sgs.shenfensource:objectName() == friend:objectName() then
+			target = friend
+			break
+		end
 		if self.player:getLostHp() > 1 and friend:hasSkill("jijiu") then
 			target = friend
 			break
 		end
-		if not friend:faceUp() then
+		if not friend:faceUp() and (sgs.shenfensource == nil or friend:objectName() ~= sgs.shenfensource:objectName()) then
 			target = friend
 			break
 		end
@@ -25,7 +29,13 @@ sgs.ai_skill_use["@@fangzhu"] = function(self, prompt)
 		else
 			self:sort(self.enemies)
 			for _, enemy in ipairs(self.enemies) do
-				if enemy:faceUp() and not (((enemy:hasSkill("jushou") or enemy:hasSkill("kuiwei")) and enemy:getPhase() == sgs.Player_Play) or enemy:hasSkill("jijiu")) then
+				local invoke = true
+				if (enemy:hasSkill("jushou") or enemy:hasSkill("kuiwei")) and enemy:getPhase() == sgs.Player_Play then invoke =false end
+				if enemy:hasSkill("jijiu") and x ==2 then invoke =false end
+				if enemy:hasUsed("ShenfenCard") and enemy:faceUp() and enemy:getPhase() == sgs.Player_Play and
+				sgs.shenfensource and sgs.shenfensource:objectName() == enemy:objectName() then invoke = false end
+				
+				if enemy:faceUp() and invoke then
 					target = enemy
 					break
 				end
@@ -62,6 +72,20 @@ sgs.ai_card_intention.FangzhuCard = function(card, from, tos)
 	if from:getLostHp() < 3 then
 		sgs.updateIntention(from, tos[1], 80/from:getLostHp())
 	end
+end
+
+sgs.ai_need_damaged.fangzhu = function (self, attacker)
+	self:sort(self.friends_noself)
+	for _, friend in ipairs(self.friends_noself) do
+		if not friend:faceUp() then
+			return true
+		end
+		if (friend:hasSkill("jushou") or friend:hasSkill("kuiwei")) and friend:getPhase() == sgs.Player_Play then
+			return true
+		end
+	end	
+	if self.player:getLostHp()<=1 and sgs.turncount>2 then return true end	
+	return false
 end
 
 sgs.ai_chaofeng.caopi = -3
@@ -309,7 +333,7 @@ luanwu_skill.getTurnUseCard=function(self)
 			end
 		end
 
-		local has_slash = getCardsNum("Slash", player)>0 and true or false
+		local has_slash = getCardsNum("Slash", player)>0
 		local can_slash = false
 		if not can_slash then
 			for _, p in sgs.qlist(self.room:getOtherPlayers(player)) do
@@ -388,7 +412,7 @@ sgs.ai_skill_cardask["@roulin2-jink-1"] = sgs.ai_skill_cardask["@wushuang-jink-1
 
 sgs.ai_skill_invoke.baonue = function(self, data)
 	for _,p in sgs.qlist(self.room:getOtherPlayers(self.player)) do
-		if p:hasLordSkill("baonue") and self:isFriend(p) and not p:hasFlag("baonueused") and p:isAlive() then
+		if p:hasLordSkill("baonue") and self:isFriend(p) and not p:hasFlag("baonueused") and p:isAlive() and p:isWounded() then
 			return true
 		end
 	end

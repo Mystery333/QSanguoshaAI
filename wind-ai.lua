@@ -175,7 +175,7 @@ end
 
 sgs.ai_skill_use["@@leiji"]=function(self,prompt)
 	local mode = self.room:getMode()
-	if mode:find("mini") or mode:find("custom_scenario") then 
+	if mode:find("_mini_17") or mode:find("_mini_19") or mode:find("_mini_20") or mode:find("_mini_26") then 
 		local players = self.room:getAllPlayers();
 		for _,aplayer in sgs.qlist(players) do
 			if aplayer:getState() ~= "robot" then
@@ -202,13 +202,9 @@ function sgs.ai_slash_prohibit.leiji(self, to, card)
 	local hcard = to:getHandcardNum()
 	if self.player:hasSkill("liegong") and (hcard>=self.player:getHp() or hcard<=self.player:getAttackRange()) then return false end
 
-	if getCardsNum("Jink", to) > 0 then return true end
-	if self:isEquip("EightDiagram", to) then
-		local equips = to:getEquips()
-		for _, equip in sgs.qlist(equips) do
-			if equip:getSuitString() == "spade" then return true end
-		end
-	end
+	if getKnownCard(to,"Jink",true)>=1 or (self:hasSuit("spade", true, to) and hcard>=2)then return true end
+	if self:isEquip("EightDiagram", to) then return true end
+	
 end
 
 function sgs.ai_cardneed.leiji(to, card, self)
@@ -258,7 +254,7 @@ sgs.ai_skill_use_func.HuangtianCard=function(card,use,self)
 	end
 	
 	if #targets == 0 then return end
-	if self:needBear() then return "." end
+	if self:needBear() or self:getCardsNum("Jink",self.player,"h")<=1  then return "." end
 	use.card=card
 	self:sort(targets, "defense")
 	if use.to then

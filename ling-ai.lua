@@ -69,6 +69,8 @@ neofanjian_skill.getTurnUseCard=function(self)
 	self:sortByKeepValue(cards)
 	local card_id = cards[1]:getEffectiveId()
 
+	if cards[1]:isKindOf("Peach") or cards[1]:isKindOf("Analeptic") then return nil end
+
 	local card_str = "@NeoFanjianCard=" .. card_id
 	local fanjianCard = sgs.Card_Parse(card_str)
 	assert(fanjianCard)
@@ -134,7 +136,22 @@ end
 sgs.ai_skill_invoke.neoganglie = function(self, data)
 	local target = data:toPlayer()
 	if not self:isFriend(target) then
+        if (self:hasSkills(sgs.masochism_skill,target) or self:getDamagedEffects(target,self.player)) and target:getHandcardNum()<=1 then return false end
 		self.room:setPlayerFlag(target, "ganglie_target")
+		return true
+    else
+        if self:getDamagedEffects(target,self.player) then 
+			sgs.ai_ganglie_effect = string.format("%s_%s_%d",self.player:objectName(), target:objectName(),sgs.turncount) 
+			return true 
+		end
+	end
+	return false
+end
+
+sgs.ai_need_damaged.neoganglie = function (self, attacker)
+	if self:getDamagedEffects(attacker,self.player) then return self:isFriend(attacker) end
+
+	if self:isEnemy(attacker) and attacker:getHp() <= 2 and not attacker:hasSkill("buqu") and sgs.isGoodTarget(attacker,self.enemies) then
 		return true
 	end
 	return false
@@ -148,9 +165,10 @@ sgs.ai_skill_choice.neoganglie = function(self, choices)
 			self.room:setPlayerFlag(target, "-ganglie_target")
 		end
 	end
-	if self:hasSkills(sgs.masochism_skill,target) and target:getHp() >= target:getHandcardNum() 
-		and target:getHandcardNum() > 1 then
-			return "throw"
+    if self:getDamagedEffects(target,self.player) and self:isFriend(target) then return "damage" end
+
+	if (self:hasSkills(sgs.masochism_skill,target) or self:getDamagedEffects(target,self.player)) and target:getHandcardNum() > 1 then
+		return "throw"
 	end
 	return "damage"
 end

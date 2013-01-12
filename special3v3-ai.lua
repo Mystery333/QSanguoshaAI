@@ -1,13 +1,11 @@
 sgs.ai_skill_cardask["@huanshi-card"] = function(self, data)
 	local judge = data:toJudge()
 
-	if self:needRetrial(judge) then
-		local cards = sgs.QList2Table(self.player:getCards("he"))
-		local card_id = self:getRetrialCardId(cards, judge)
-		local card = sgs.Sanguosha:getCard(card_id)
-		if card_id ~= -1 then
-			return "@HuanshiCard[" .. card:getSuitString() .. ":" .. card:getNumberString() .. "]=" .. card_id
-		end
+	local cards = sgs.QList2Table(self.player:getCards("he"))
+	local card_id = self:getRetrialCardId(cards, judge)
+	local card = sgs.Sanguosha:getCard(card_id)
+	if card_id ~= -1 then
+		return "@HuanshiCard[" .. card:getSuitString() .. ":" .. card:getNumberString() .. "]=" .. card_id
 	end
 
 	return "."
@@ -17,7 +15,7 @@ sgs.ai_skill_invoke.huanshi = true
 
 sgs.ai_skill_choice.huanshi = function(self, choices)
 	local zhugejin = self.room:findPlayerBySkillName("huanshi")
-	if self:objectiveLevel(zhugejin) > 3 then return "no" end
+	if self:objectiveLevel(zhugejin) >= 0 then return "no" end
 	return "yes"
 end
 
@@ -59,4 +57,10 @@ sgs.ai_skill_use["@@hongyuan"] = function(self, prompt)
 	local first = self.friends_noself[first_index]:objectName()
 	local second = self.friends_noself[second_index]:objectName()
 	return ("@HongyuanCard=.->%s+%s"):format(first, second)
+end
+
+sgs.ai_card_intention.HongyuanCard = function(card, from, tos, source)
+	for _, to in ipairs(tos) do
+		sgs.updateIntention(from, to, -80)
+	end
 end
