@@ -198,9 +198,9 @@ sgs.ai_skill_choice.nosxuanfeng = function(self, choices)
 	return "nothing"
 end
 
-sgs.ai_skill_playerchosen.nosxuanfeng_damage = sgs.ai_skill_playerchosen.damage
+sgs.ai_skill_playerchosen.xuanfeng_damage = sgs.ai_skill_playerchosen.damage
 
-sgs.ai_skill_playerchosen.nosxuanfeng_slash = sgs.ai_skill_playerchosen.zero_card_as_slash
+sgs.ai_skill_playerchosen.xuanfeng_slash = sgs.ai_skill_playerchosen.zero_card_as_slash
 
-sgs.ai_playerchosen_intention.nosxuanfeng_damage = 80
-sgs.ai_playerchosen_intention.nosxuanfeng_slash = 80
+sgs.ai_playerchosen_intention.xuanfeng_damage = 80
+sgs.ai_playerchosen_intention.xuanfeng_slash = 80
